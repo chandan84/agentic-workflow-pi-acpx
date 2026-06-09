@@ -9,6 +9,7 @@ Tauri/React · Rust · Postgres).
 | [`infographic.svg`](./infographic.svg) | One-page visual: the layered stack, the prompt → run → replay pipeline, agents-group isolation, audit layers, and roadmap. (Editable source.) |
 | [`infographic.png`](./infographic.png) | Rendered raster copy of the infographic for universal preview. |
 | [`PLAN.md`](./PLAN.md) | The approved iteration plan (mirrored here per the "store all plans in docs/plan" convention). |
+| [`mockups/`](./mockups) | Six light-themed, card-style UI prototype illustrations for the key screens (Groups · Group detail · Create flow from prompt · Flow canvas · Run / replay · Audit). Both SVG sources and rendered PNGs. |
 
 ## Status
 

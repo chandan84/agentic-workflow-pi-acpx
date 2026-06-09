@@ -1,0 +1,182 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="820" viewBox="0 0 1280 820" font-family="Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <filter id="card" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#1f2a44" flood-opacity="0.10"/>
+    </filter>
+    <linearGradient id="logo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#14b8a6"/>
+    </linearGradient>
+    <pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.4" fill="#dfe3ec"/>
+    </pattern>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#9aa3b2"/></marker>
+    <marker id="arG" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#10b981"/></marker>
+    <marker id="arI" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#4f46e5"/></marker>
+  </defs>
+  <rect width="1280" height="820" fill="#f5f6fa"/>
+
+  <!-- Sidebar -->
+  <rect x="0" y="0" width="232" height="820" fill="#ffffff"/>
+  <line x1="232" y1="0" x2="232" y2="820" stroke="#e9ebf1"/>
+  <rect x="24" y="28" width="30" height="30" rx="9" fill="url(#logo)"/>
+  <text x="64" y="49" fill="#111827" font-size="16" font-weight="700">Agentic Workflows</text>
+  <circle cx="40" cy="117" r="4" fill="#9ca3af"/><text x="60" y="122" fill="#6b7280" font-size="14">Groups</text>
+  <circle cx="40" cy="161" r="4" fill="#9ca3af"/><text x="60" y="166" fill="#6b7280" font-size="14">Flows</text>
+  <rect x="16" y="184" width="200" height="42" rx="10" fill="#eef2ff"/><rect x="16" y="184" width="3" height="42" rx="2" fill="#4f46e5"/>
+  <circle cx="40" cy="205" r="4" fill="#4f46e5"/><text x="60" y="210" fill="#4f46e5" font-size="14" font-weight="600">Runs</text>
+  <circle cx="40" cy="245" r="4" fill="#9ca3af"/><text x="60" y="250" fill="#6b7280" font-size="14">Audit</text>
+  <circle cx="40" cy="285" r="4" fill="#9ca3af"/><text x="60" y="290" fill="#6b7280" font-size="14">Settings</text>
+
+  <!-- Topbar -->
+  <rect x="232" y="0" width="1048" height="64" fill="#ffffff"/>
+  <line x1="232" y1="64" x2="1280" y2="64" stroke="#e9ebf1"/>
+  <text x="264" y="40" fill="#9ca3af" font-size="14">Groups / Support / Bug triage and fix /</text>
+  <text x="540" y="40" fill="#111827" font-size="14" font-weight="700">Run #142</text>
+  <circle cx="1232" cy="32" r="14" fill="#e0e7ff"/><text x="1232" y="37" fill="#4f46e5" font-size="12" font-weight="700" text-anchor="middle">CM</text>
+
+  <!-- Status banner -->
+  <g filter="url(#card)"><rect x="264" y="84" width="984" height="68" rx="14" fill="#ffffff"/></g>
+  <rect x="284" y="100" width="36" height="36" rx="10" fill="#fffbeb"/>
+  <text x="302" y="125" fill="#b45309" font-size="20" text-anchor="middle">⏸</text>
+  <text x="332" y="116" fill="#111827" font-size="16" font-weight="700">Awaiting your approval</text>
+  <text x="332" y="136" fill="#6b7280" font-size="12">step 5 of 7 · approve_pr · input report_url=issue-491 · elapsed 3m 12s · timeout in 23h 56m</text>
+  <rect x="996" y="100" width="118" height="36" rx="10" fill="#ffffff" stroke="#d8dbe6"/><text x="1055" y="123" fill="#374151" font-size="13" font-weight="600" text-anchor="middle">Edit work-item</text>
+  <rect x="1122" y="100" width="106" height="36" rx="10" fill="#10b981"/><text x="1175" y="123" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">Approve</text>
+
+  <!-- Canvas (executed path) -->
+  <g filter="url(#card)"><rect x="264" y="164" width="716" height="412" rx="14" fill="#ffffff"/></g>
+  <rect x="272" y="172" width="700" height="396" rx="10" fill="url(#dots)"/>
+
+  <!-- non-executed edges (faded) -->
+  <g fill="none" stroke="#c8cdda" stroke-width="2" stroke-dasharray="4 4">
+    <path d="M816,218 L846,212" marker-end="url(#ar)"/>
+    <path d="M660,458 L630,458" marker-end="url(#ar)"/>
+    <path d="M470,458 L424,452" marker-end="url(#ar)"/>
+  </g>
+  <!-- executed edges (green) -->
+  <g fill="none" stroke="#10b981" stroke-width="2.5">
+    <path d="M358,162 L358,190" marker-end="url(#arG)"/>
+    <path d="M436,218 L466,218" marker-end="url(#arG)"/>
+    <path d="M626,218 L656,218" marker-end="url(#arG)"/>
+    <path d="M738,246 L738,306" marker-end="url(#arG)"/>
+  </g>
+  <!-- current edge into approve (indigo dashed pulse-style) -->
+  <path d="M738,366 L738,426" fill="none" stroke="#4f46e5" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#arI)"/>
+
+  <rect x="822" y="196" width="44" height="18" rx="9" fill="#ffffff" stroke="#eceef4"/><text x="844" y="209" fill="#9ca3af" font-size="10" text-anchor="middle">close</text>
+  <rect x="744" y="268" width="92" height="18" rx="9" fill="#ecfdf5" stroke="#bbf7d0"/><text x="790" y="281" fill="#047857" font-size="10" font-weight="600" text-anchor="middle">bug ✓</text>
+
+  <!-- start -->
+  <circle cx="358" cy="150" r="12" fill="#10b981"/><text x="358" y="154" fill="#ffffff" font-size="11" text-anchor="middle">▶</text>
+
+  <!-- load_report ✓ -->
+  <rect x="280" y="190" width="156" height="56" rx="12" fill="#f7fdfa" stroke="#bbf7d0"/>
+  <rect x="292" y="204" width="28" height="28" rx="8" fill="#eef2ff"/><text x="306" y="223" fill="#4f46e5" font-size="13" text-anchor="middle">ƒ</text>
+  <text x="330" y="214" fill="#111827" font-size="13" font-weight="600">load_report</text>
+  <text x="330" y="234" fill="#047857" font-size="10" font-weight="600">✓ done · 0.2s</text>
+
+  <!-- reproduce ✓ -->
+  <rect x="470" y="190" width="156" height="56" rx="12" fill="#f7fdfa" stroke="#bbf7d0"/>
+  <rect x="482" y="204" width="28" height="28" rx="8" fill="#f3e8ff"/><text x="496" y="223" fill="#7c3aed" font-size="13" text-anchor="middle">✷</text>
+  <text x="520" y="214" fill="#111827" font-size="13" font-weight="600">reproduce</text>
+  <text x="520" y="234" fill="#047857" font-size="10" font-weight="600">✓ done · 14.6s · triage</text>
+
+  <!-- classify ✓ -->
+  <rect x="660" y="190" width="156" height="56" rx="12" fill="#f7fdfa" stroke="#bbf7d0"/>
+  <rect x="672" y="204" width="28" height="28" rx="8" fill="#fff7ed"/><text x="686" y="223" fill="#b45309" font-size="13" text-anchor="middle">◇</text>
+  <text x="710" y="214" fill="#111827" font-size="13" font-weight="600">classify</text>
+  <text x="710" y="234" fill="#047857" font-size="10" font-weight="600">✓ → bug · 1.2s</text>
+
+  <!-- closed (faded, not visited) -->
+  <rect x="846" y="190" width="120" height="44" rx="12" fill="#fafbfe" stroke="#e6e8ee" stroke-dasharray="3 3"/>
+  <rect x="858" y="200" width="24" height="24" rx="7" fill="#f3f4f6"/><text x="870" y="217" fill="#9ca3af" font-size="12" text-anchor="middle">■</text>
+  <text x="892" y="216" fill="#9ca3af" font-size="13" font-weight="600">closed</text>
+
+  <!-- draft_fix ✓ -->
+  <rect x="660" y="306" width="156" height="56" rx="12" fill="#f7fdfa" stroke="#bbf7d0"/>
+  <rect x="672" y="320" width="28" height="28" rx="8" fill="#f3e8ff"/><text x="686" y="339" fill="#7c3aed" font-size="13" text-anchor="middle">✷</text>
+  <text x="710" y="330" fill="#111827" font-size="13" font-weight="600">draft_fix</text>
+  <text x="710" y="350" fill="#047857" font-size="10" font-weight="600">✓ done · 22.1s · dev · 3 tools</text>
+
+  <!-- approve (current) -->
+  <rect x="660" y="426" width="156" height="56" rx="12" fill="#ffffff" stroke="#4f46e5" stroke-width="2.5"/>
+  <rect x="672" y="440" width="28" height="28" rx="8" fill="#fffbeb"/><text x="686" y="459" fill="#b45309" font-size="13" text-anchor="middle">⏸</text>
+  <text x="710" y="450" fill="#111827" font-size="13" font-weight="600">approve_pr</text>
+  <text x="710" y="470" fill="#4f46e5" font-size="10" font-weight="700">⏸ awaiting · 3m 12s</text>
+
+  <!-- open_pr (pending) -->
+  <rect x="470" y="426" width="156" height="56" rx="12" fill="#fafbfe" stroke="#e6e8ee" stroke-dasharray="3 3"/>
+  <rect x="482" y="440" width="28" height="28" rx="8" fill="#eff6ff"/><text x="496" y="459" fill="#9ca3af" font-size="13" text-anchor="middle">⚡</text>
+  <text x="520" y="450" fill="#9ca3af" font-size="13" font-weight="600">open_pr</text>
+  <text x="520" y="468" fill="#9ca3af" font-size="10">pending</text>
+
+  <!-- landed (pending) -->
+  <rect x="300" y="426" width="124" height="52" rx="12" fill="#fafbfe" stroke="#e6e8ee" stroke-dasharray="3 3"/>
+  <rect x="312" y="438" width="26" height="26" rx="7" fill="#f3f4f6"/><text x="325" y="456" fill="#9ca3af" font-size="12" text-anchor="middle">✓</text>
+  <text x="348" y="456" fill="#9ca3af" font-size="13" font-weight="600">landed</text>
+
+  <!-- legend / scrubber -->
+  <rect x="296" y="528" width="14" height="14" rx="7" fill="#bbf7d0"/><text x="316" y="540" fill="#6b7280" font-size="11">done</text>
+  <rect x="362" y="528" width="14" height="14" rx="7" fill="#ffffff" stroke="#4f46e5" stroke-width="2"/><text x="382" y="540" fill="#6b7280" font-size="11">current</text>
+  <rect x="438" y="528" width="14" height="14" rx="7" fill="#fafbfe" stroke="#e6e8ee" stroke-dasharray="3 3"/><text x="458" y="540" fill="#6b7280" font-size="11">pending</text>
+
+  <text x="600" y="540" fill="#6b7280" font-size="11" font-weight="600">REPLAY</text>
+  <circle cx="660" cy="536" r="14" fill="#eef2ff"/><text x="660" y="540" fill="#4f46e5" font-size="14" font-weight="700" text-anchor="middle">⏮</text>
+  <circle cx="694" cy="536" r="14" fill="#4f46e5"/><text x="694" y="541" fill="#ffffff" font-size="14" font-weight="700" text-anchor="middle">▶</text>
+  <circle cx="728" cy="536" r="14" fill="#eef2ff"/><text x="728" y="540" fill="#4f46e5" font-size="14" font-weight="700" text-anchor="middle">⏭</text>
+  <rect x="754" y="530" width="200" height="12" rx="6" fill="#eef0f6"/>
+  <rect x="754" y="530" width="124" height="12" rx="6" fill="#4f46e5"/>
+  <circle cx="878" cy="536" r="7" fill="#ffffff" stroke="#4f46e5" stroke-width="2"/>
+
+  <!-- RIGHT: trace timeline -->
+  <g filter="url(#card)"><rect x="996" y="164" width="252" height="412" rx="14" fill="#ffffff"/></g>
+  <text x="1018" y="194" fill="#111827" font-size="14" font-weight="700">Step trace</text>
+  <rect x="1180" y="180" width="46" height="20" rx="10" fill="#fffbeb"/><text x="1203" y="194" fill="#b45309" font-size="11" font-weight="600" text-anchor="middle">live</text>
+  <line x1="1018" y1="208" x2="1226" y2="208" stroke="#f0f1f5"/>
+
+  <line x1="1034" y1="232" x2="1034" y2="528" stroke="#eceef4" stroke-width="2"/>
+
+  <circle cx="1034" cy="240" r="9" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/><text x="1034" y="244" fill="#10b981" font-size="9" text-anchor="middle" font-weight="700">✓</text>
+  <text x="1054" y="236" fill="#111827" font-size="12" font-weight="600">load_report</text>
+  <text x="1054" y="252" fill="#9ca3af" font-size="11">compute · 0.2s</text>
+
+  <circle cx="1034" cy="288" r="9" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/><text x="1034" y="292" fill="#10b981" font-size="9" text-anchor="middle" font-weight="700">✓</text>
+  <text x="1054" y="284" fill="#111827" font-size="12" font-weight="600">reproduce</text>
+  <text x="1054" y="300" fill="#9ca3af" font-size="11">acp · triage · 14.6s</text>
+
+  <circle cx="1034" cy="336" r="9" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/><text x="1034" y="340" fill="#10b981" font-size="9" text-anchor="middle" font-weight="700">✓</text>
+  <text x="1054" y="332" fill="#111827" font-size="12" font-weight="600">classify → bug</text>
+  <text x="1054" y="348" fill="#9ca3af" font-size="11">decision · 1.2s</text>
+
+  <circle cx="1034" cy="384" r="9" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/><text x="1034" y="388" fill="#10b981" font-size="9" text-anchor="middle" font-weight="700">✓</text>
+  <text x="1054" y="380" fill="#111827" font-size="12" font-weight="600">draft_fix</text>
+  <text x="1054" y="396" fill="#9ca3af" font-size="11">acp · dev · 22.1s · 3 tools</text>
+
+  <circle cx="1034" cy="436" r="11" fill="#ffffff" stroke="#4f46e5" stroke-width="2.5"/><text x="1034" y="441" fill="#4f46e5" font-size="11" text-anchor="middle" font-weight="700">⏸</text>
+  <text x="1054" y="432" fill="#4f46e5" font-size="12" font-weight="700">approve_pr</text>
+  <text x="1054" y="448" fill="#4f46e5" font-size="11">checkpoint · awaiting · 3m12s</text>
+
+  <circle cx="1034" cy="484" r="9" fill="#ffffff" stroke="#cdd2dd" stroke-width="2"/><text x="1034" y="488" fill="#cdd2dd" font-size="10" text-anchor="middle">·</text>
+  <text x="1054" y="480" fill="#9ca3af" font-size="12">open_pr</text>
+  <text x="1054" y="496" fill="#c5c9d3" font-size="11">action · pending</text>
+
+  <circle cx="1034" cy="528" r="9" fill="#ffffff" stroke="#cdd2dd" stroke-width="2"/><text x="1034" y="532" fill="#cdd2dd" font-size="10" text-anchor="middle">·</text>
+  <text x="1054" y="524" fill="#9ca3af" font-size="12">landed</text>
+  <text x="1054" y="540" fill="#c5c9d3" font-size="11">end · pending</text>
+
+  <!-- Bottom: work-item & checkpoint card -->
+  <g filter="url(#card)"><rect x="264" y="592" width="716" height="116" rx="14" fill="#ffffff"/></g>
+  <text x="288" y="618" fill="#111827" font-size="13" font-weight="700">Work-item (latest)</text>
+  <rect x="436" y="606" width="68" height="18" rx="9" fill="#eef2ff"/><text x="470" y="619" fill="#4f46e5" font-size="10" font-weight="600" text-anchor="middle">JSON · v4</text>
+  <rect x="288" y="630" width="668" height="64" rx="10" fill="#fafbfe" stroke="#e6e8ee"/>
+  <text x="304" y="650" fill="#374151" font-size="12" font-family="ui-monospace, Menlo, Consolas, monospace">{ "report": { "id": "issue-491", "title": "checkout retries 5xx" },</text>
+  <text x="304" y="666" fill="#374151" font-size="12" font-family="ui-monospace, Menlo, Consolas, monospace">  "diagnosis": { "cause": "timeout in stripe webhook", "steps": [ … ] },</text>
+  <text x="304" y="682" fill="#374151" font-size="12" font-family="ui-monospace, Menlo, Consolas, monospace">  "patch": "diff --git a/api/webhooks.ts …" }</text>
+
+  <g filter="url(#card)"><rect x="996" y="592" width="252" height="116" rx="14" fill="#ffffff"/></g>
+  <text x="1018" y="618" fill="#111827" font-size="13" font-weight="700">Checkpoint</text>
+  <text x="1018" y="640" fill="#6b7280" font-size="12">Approve opening a PR?</text>
+  <text x="1018" y="658" fill="#9ca3af" font-size="11">patch: 1 file, +12 / −3</text>
+  <rect x="1018" y="668" width="100" height="30" rx="9" fill="#10b981"/><text x="1068" y="688" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">Approve</text>
+  <rect x="1126" y="668" width="100" height="30" rx="9" fill="#ffffff" stroke="#d8dbe6"/><text x="1176" y="688" fill="#374151" font-size="12" font-weight="600" text-anchor="middle">Reject</text>
+</svg>

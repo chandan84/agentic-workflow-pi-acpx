@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="820" viewBox="0 0 1280 820" font-family="Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <filter id="card" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#1f2a44" flood-opacity="0.08"/>
+    </filter>
+    <linearGradient id="logo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#14b8a6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="820" fill="#f5f6fa"/>
+
+  <!-- Sidebar -->
+  <rect x="0" y="0" width="232" height="820" fill="#ffffff"/>
+  <line x1="232" y1="0" x2="232" y2="820" stroke="#e9ebf1"/>
+  <rect x="24" y="28" width="30" height="30" rx="9" fill="url(#logo)"/>
+  <text x="64" y="49" fill="#111827" font-size="16" font-weight="700">Agentic Workflows</text>
+  <circle cx="40" cy="117" r="4" fill="#9ca3af"/><text x="60" y="122" fill="#6b7280" font-size="14">Groups</text>
+  <rect x="16" y="140" width="200" height="42" rx="10" fill="#eef2ff"/>
+  <rect x="16" y="140" width="3" height="42" rx="2" fill="#4f46e5"/>
+  <circle cx="40" cy="161" r="4" fill="#4f46e5"/><text x="60" y="166" fill="#4f46e5" font-size="14" font-weight="600">Flows</text>
+  <circle cx="40" cy="201" r="4" fill="#9ca3af"/><text x="60" y="206" fill="#6b7280" font-size="14">Runs</text>
+  <circle cx="40" cy="241" r="4" fill="#9ca3af"/><text x="60" y="246" fill="#6b7280" font-size="14">Audit</text>
+  <circle cx="40" cy="281" r="4" fill="#9ca3af"/><text x="60" y="286" fill="#6b7280" font-size="14">Settings</text>
+
+  <!-- Topbar -->
+  <rect x="232" y="0" width="1048" height="64" fill="#ffffff"/>
+  <line x1="232" y1="64" x2="1280" y2="64" stroke="#e9ebf1"/>
+  <text x="264" y="40" fill="#9ca3af" font-size="14">Groups / Support /</text>
+  <text x="398" y="40" fill="#111827" font-size="14" font-weight="700">New flow</text>
+  <circle cx="1232" cy="32" r="14" fill="#e0e7ff"/><text x="1232" y="37" fill="#4f46e5" font-size="12" font-weight="700" text-anchor="middle">CM</text>
+
+  <text x="264" y="112" fill="#111827" font-size="22" font-weight="700">Create a flow from a prompt</text>
+  <text x="264" y="136" fill="#6b7280" font-size="14">The common pi agent decomposes your instruction into steps, branches, and human checkpoints.</text>
+
+  <!-- LEFT: prompt -->
+  <g filter="url(#card)"><rect x="264" y="160" width="520" height="540" rx="16" fill="#ffffff"/></g>
+  <text x="288" y="196" fill="#111827" font-size="14" font-weight="700">Describe your workflow</text>
+  <rect x="288" y="210" width="472" height="180" rx="12" fill="#fafbfe" stroke="#e6e8ee"/>
+  <text x="306" y="238" fill="#374151" font-size="13">Triage incoming bug reports, reproduce the</text>
+  <text x="306" y="258" fill="#374151" font-size="13">issue, propose a fix, and open a PR — but only</text>
+  <text x="306" y="278" fill="#374151" font-size="13">after I approve the change.</text>
+  <rect x="306" y="296" width="2" height="16" fill="#4f46e5"/>
+
+  <text x="288" y="424" fill="#111827" font-size="13" font-weight="700">Use agents from this group</text>
+  <rect x="288" y="436" width="74" height="28" rx="14" fill="#fdf2f8" stroke="#fbcfe8"/><circle cx="306" cy="450" r="6" fill="#fbcfe8"/><text x="318" y="454" fill="#9d174d" font-size="12" font-weight="600">triage</text>
+  <rect x="372" y="436" width="64" height="28" rx="14" fill="#f0fdf4" stroke="#bbf7d0"/><circle cx="390" cy="450" r="6" fill="#bbf7d0"/><text x="402" y="454" fill="#166534" font-size="12" font-weight="600">dev</text>
+  <rect x="446" y="436" width="60" height="28" rx="14" fill="#fffbeb" stroke="#fde68a"/><circle cx="464" cy="450" r="6" fill="#fde68a"/><text x="476" y="454" fill="#92400e" font-size="12" font-weight="600">qa</text>
+
+  <text x="288" y="500" fill="#111827" font-size="13" font-weight="700">Permissions</text>
+  <rect x="288" y="512" width="472" height="40" rx="10" fill="#fafbfe" stroke="#e6e8ee"/>
+  <circle cx="312" cy="532" r="7" fill="#ffffff" stroke="#4f46e5" stroke-width="2"/><circle cx="312" cy="532" r="3" fill="#4f46e5"/>
+  <text x="330" y="537" fill="#374151" font-size="13">approve-reads</text>
+  <text x="470" y="537" fill="#9ca3af" font-size="12">writes require a checkpoint</text>
+  <text x="744" y="537" fill="#9ca3af" font-size="13" text-anchor="end">▾</text>
+
+  <rect x="288" y="582" width="472" height="46" rx="12" fill="#4f46e5"/>
+  <text x="524" y="610" fill="#ffffff" font-size="15" font-weight="700" text-anchor="middle">✦  Generate workflow</text>
+  <text x="524" y="656" fill="#9ca3af" font-size="12" text-anchor="middle">Authored to acpx flow conventions · fully editable afterwards</text>
+
+  <!-- RIGHT: generated outline -->
+  <g filter="url(#card)"><rect x="808" y="160" width="440" height="540" rx="16" fill="#ffffff"/></g>
+  <text x="832" y="194" fill="#111827" font-size="14" font-weight="700">Generated workflow</text>
+  <rect x="1000" y="180" width="60" height="20" rx="10" fill="#eef2ff"/><text x="1030" y="194" fill="#4f46e5" font-size="11" font-weight="600" text-anchor="middle">draft</text>
+  <rect x="1066" y="180" width="158" height="20" rx="10" fill="#ecfdf5"/><circle cx="1080" cy="190" r="3" fill="#10b981"/><text x="1090" y="194" fill="#047857" font-size="11" font-weight="600">7 steps · 1 checkpoint</text>
+
+  <!-- vertical connector -->
+  <line x1="852" y1="232" x2="852" y2="600" stroke="#e6e8ee" stroke-width="2"/>
+
+  <!-- step rows -->
+  <!-- 1 start/compute -->
+  <circle cx="852" cy="240" r="11" fill="#eef2ff"/><text x="852" y="244" fill="#4f46e5" font-size="11" font-weight="700" text-anchor="middle">1</text>
+  <text x="876" y="236" fill="#111827" font-size="13" font-weight="600">Load report</text>
+  <rect x="1130" y="228" width="94" height="18" rx="9" fill="#eef2ff"/><text x="1177" y="241" fill="#4f46e5" font-size="10" font-weight="600" text-anchor="middle">compute</text>
+  <text x="876" y="252" fill="#9ca3af" font-size="11">parse report_url → work-item</text>
+
+  <!-- 2 acp -->
+  <circle cx="852" cy="296" r="11" fill="#fdf2f8"/><text x="852" y="300" fill="#9d174d" font-size="11" font-weight="700" text-anchor="middle">2</text>
+  <text x="876" y="292" fill="#111827" font-size="13" font-weight="600">Reproduce</text>
+  <rect x="1166" y="284" width="58" height="18" rx="9" fill="#f3e8ff"/><text x="1195" y="297" fill="#7c3aed" font-size="10" font-weight="600" text-anchor="middle">acp</text>
+  <rect x="1118" y="284" width="44" height="18" rx="9" fill="#fdf2f8"/><text x="1140" y="297" fill="#9d174d" font-size="10" font-weight="600" text-anchor="middle">triage</text>
+  <text x="876" y="308" fill="#9ca3af" font-size="11">reproduce + diagnose</text>
+
+  <!-- 3 decision -->
+  <circle cx="852" cy="352" r="11" fill="#fff7ed"/><text x="852" y="356" fill="#b45309" font-size="11" font-weight="700" text-anchor="middle">3</text>
+  <text x="876" y="348" fill="#111827" font-size="13" font-weight="600">Classify</text>
+  <rect x="1140" y="340" width="84" height="18" rx="9" fill="#fff7ed"/><text x="1182" y="353" fill="#b45309" font-size="10" font-weight="600" text-anchor="middle">decision</text>
+  <text x="876" y="364" fill="#9ca3af" font-size="11">bug · feature · close</text>
+
+  <!-- 4 acp dev -->
+  <circle cx="852" cy="408" r="11" fill="#f0fdf4"/><text x="852" y="412" fill="#166534" font-size="11" font-weight="700" text-anchor="middle">4</text>
+  <text x="876" y="404" fill="#111827" font-size="13" font-weight="600">Draft fix</text>
+  <rect x="1166" y="396" width="58" height="18" rx="9" fill="#f3e8ff"/><text x="1195" y="409" fill="#7c3aed" font-size="10" font-weight="600" text-anchor="middle">acp</text>
+  <rect x="1128" y="396" width="34" height="18" rx="9" fill="#f0fdf4"/><text x="1145" y="409" fill="#166534" font-size="10" font-weight="600" text-anchor="middle">dev</text>
+  <text x="876" y="420" fill="#9ca3af" font-size="11">propose patch from diagnosis</text>
+
+  <!-- 5 checkpoint -->
+  <circle cx="852" cy="464" r="11" fill="#fffbeb" stroke="#f59e0b" stroke-width="2"/><text x="852" y="468" fill="#b45309" font-size="11" font-weight="700" text-anchor="middle">5</text>
+  <text x="876" y="460" fill="#111827" font-size="13" font-weight="600">Approve opening a PR</text>
+  <rect x="1124" y="452" width="100" height="18" rx="9" fill="#fffbeb"/><text x="1174" y="465" fill="#b45309" font-size="10" font-weight="600" text-anchor="middle">checkpoint</text>
+  <text x="876" y="476" fill="#9ca3af" font-size="11">human input · timeout 24h</text>
+
+  <!-- 6 action -->
+  <circle cx="852" cy="520" r="11" fill="#eff6ff"/><text x="852" y="524" fill="#2563eb" font-size="11" font-weight="700" text-anchor="middle">6</text>
+  <text x="876" y="516" fill="#111827" font-size="13" font-weight="600">Open PR</text>
+  <rect x="1150" y="508" width="74" height="18" rx="9" fill="#eff6ff"/><text x="1187" y="521" fill="#2563eb" font-size="10" font-weight="600" text-anchor="middle">action</text>
+  <text x="876" y="532" fill="#9ca3af" font-size="11">gh pr create</text>
+
+  <!-- 7 end -->
+  <circle cx="852" cy="576" r="11" fill="#ecfdf5"/><text x="852" y="580" fill="#047857" font-size="11" font-weight="700" text-anchor="middle">✓</text>
+  <text x="876" y="572" fill="#111827" font-size="13" font-weight="600">Landed</text>
+  <rect x="1166" y="564" width="58" height="18" rx="9" fill="#ecfdf5"/><text x="1195" y="577" fill="#047857" font-size="10" font-weight="600" text-anchor="middle">end</text>
+
+  <line x1="832" y1="620" x2="1224" y2="620" stroke="#f0f1f5"/>
+  <rect x="832" y="640" width="244" height="44" rx="12" fill="#4f46e5"/>
+  <text x="954" y="668" fill="#ffffff" font-size="14" font-weight="700" text-anchor="middle">Open in canvas →</text>
+  <rect x="1088" y="640" width="136" height="44" rx="12" fill="#ffffff" stroke="#d8dbe6"/>
+  <text x="1156" y="668" fill="#374151" font-size="14" font-weight="600" text-anchor="middle">Regenerate</text>
+</svg>

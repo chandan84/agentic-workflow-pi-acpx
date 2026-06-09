@@ -1,0 +1,194 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="820" viewBox="0 0 1280 820" font-family="Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <filter id="card" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#1f2a44" flood-opacity="0.08"/>
+    </filter>
+    <linearGradient id="logo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#14b8a6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="820" fill="#f5f6fa"/>
+
+  <!-- Sidebar -->
+  <rect x="0" y="0" width="232" height="820" fill="#ffffff"/>
+  <line x1="232" y1="0" x2="232" y2="820" stroke="#e9ebf1"/>
+  <rect x="24" y="28" width="30" height="30" rx="9" fill="url(#logo)"/>
+  <text x="64" y="49" fill="#111827" font-size="16" font-weight="700">Agentic Workflows</text>
+  <circle cx="40" cy="117" r="4" fill="#9ca3af"/><text x="60" y="122" fill="#6b7280" font-size="14">Groups</text>
+  <circle cx="40" cy="161" r="4" fill="#9ca3af"/><text x="60" y="166" fill="#6b7280" font-size="14">Flows</text>
+  <circle cx="40" cy="201" r="4" fill="#9ca3af"/><text x="60" y="206" fill="#6b7280" font-size="14">Runs</text>
+  <rect x="16" y="224" width="200" height="42" rx="10" fill="#eef2ff"/><rect x="16" y="224" width="3" height="42" rx="2" fill="#4f46e5"/>
+  <circle cx="40" cy="245" r="4" fill="#4f46e5"/><text x="60" y="250" fill="#4f46e5" font-size="14" font-weight="600">Audit</text>
+  <circle cx="40" cy="285" r="4" fill="#9ca3af"/><text x="60" y="290" fill="#6b7280" font-size="14">Settings</text>
+
+  <!-- Topbar -->
+  <rect x="232" y="0" width="1048" height="64" fill="#ffffff"/>
+  <line x1="232" y1="64" x2="1280" y2="64" stroke="#e9ebf1"/>
+  <text x="264" y="40" fill="#111827" font-size="18" font-weight="700">Audit</text>
+  <circle cx="1232" cy="32" r="14" fill="#e0e7ff"/><text x="1232" y="37" fill="#4f46e5" font-size="12" font-weight="700" text-anchor="middle">CM</text>
+
+  <!-- Filter strip -->
+  <g filter="url(#card)"><rect x="264" y="84" width="984" height="64" rx="14" fill="#ffffff"/></g>
+  <rect x="288" y="100" width="240" height="32" rx="9" fill="#fafbfe" stroke="#e6e8ee"/>
+  <circle cx="306" cy="116" r="5" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
+  <line x1="310" y1="120" x2="314" y2="124" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="324" y="120" fill="#9ca3af" font-size="12">Search events, actors, runs…</text>
+
+  <rect x="544" y="100" width="116" height="32" rx="16" fill="#eef2ff"/>
+  <text x="602" y="120" fill="#4f46e5" font-size="12" font-weight="600" text-anchor="middle">Last 24 hours ▾</text>
+
+  <rect x="672" y="100" width="118" height="32" rx="16" fill="#ffffff" stroke="#e6e8ee"/>
+  <text x="731" y="120" fill="#374151" font-size="12" font-weight="600" text-anchor="middle">Group: any ▾</text>
+
+  <rect x="802" y="100" width="110" height="32" rx="16" fill="#ffffff" stroke="#e6e8ee"/>
+  <text x="857" y="120" fill="#374151" font-size="12" font-weight="600" text-anchor="middle">Agent: any ▾</text>
+
+  <rect x="924" y="100" width="106" height="32" rx="16" fill="#ffffff" stroke="#e6e8ee"/>
+  <text x="977" y="120" fill="#374151" font-size="12" font-weight="600" text-anchor="middle">Flow: any ▾</text>
+
+  <rect x="1042" y="100" width="138" height="32" rx="16" fill="#ffffff" stroke="#e6e8ee"/>
+  <text x="1111" y="120" fill="#374151" font-size="12" font-weight="600" text-anchor="middle">Event: all types ▾</text>
+
+  <text x="1224" y="120" fill="#4f46e5" font-size="12" font-weight="600" text-anchor="end">Reset</text>
+
+  <!-- LEFT: events table -->
+  <g filter="url(#card)"><rect x="264" y="164" width="716" height="544" rx="14" fill="#ffffff"/></g>
+  <text x="288" y="194" fill="#111827" font-size="14" font-weight="700">Recent events</text>
+  <text x="956" y="194" fill="#9ca3af" font-size="12" text-anchor="end">214 events · export CSV</text>
+  <line x1="288" y1="208" x2="956" y2="208" stroke="#f0f1f5"/>
+
+  <!-- header row -->
+  <text x="288" y="230" fill="#9ca3af" font-size="11" font-weight="600">TIME</text>
+  <text x="384" y="230" fill="#9ca3af" font-size="11" font-weight="600">ACTOR</text>
+  <text x="514" y="230" fill="#9ca3af" font-size="11" font-weight="600">EVENT</text>
+  <text x="756" y="230" fill="#9ca3af" font-size="11" font-weight="600">TARGET</text>
+  <text x="956" y="230" fill="#9ca3af" font-size="11" font-weight="600" text-anchor="end">SOURCE</text>
+
+  <!-- rows -->
+  <g font-size="12">
+    <!-- row 1 -->
+    <line x1="288" y1="244" x2="956" y2="244" stroke="#f5f6fa"/>
+    <text x="288" y="268" fill="#6b7280">09:42:18</text>
+    <circle cx="394" cy="263" r="9" fill="#e0e7ff"/><text x="394" y="267" fill="#4f46e5" font-size="9" font-weight="700" text-anchor="middle">CM</text>
+    <text x="410" y="268" fill="#111827" font-weight="600">Chandan M.</text>
+    <rect x="514" y="254" width="118" height="20" rx="10" fill="#ecfdf5"/><text x="573" y="268" fill="#047857" font-size="11" font-weight="600" text-anchor="middle">approved checkpoint</text>
+    <text x="756" y="268" fill="#374151">run #142 · approve_pr</text>
+    <rect x="900" y="254" width="56" height="20" rx="10" fill="#fdf4ff"/><text x="928" y="268" fill="#a21caf" font-size="10" font-weight="600" text-anchor="middle">pg</text>
+
+    <line x1="288" y1="284" x2="956" y2="284" stroke="#f5f6fa"/>
+    <text x="288" y="308" fill="#6b7280">09:39:06</text>
+    <circle cx="394" cy="303" r="9" fill="#bbf7d0"/><text x="394" y="307" fill="#166534" font-size="9" font-weight="700" text-anchor="middle">dv</text>
+    <text x="410" y="308" fill="#111827" font-weight="600">agent · dev</text>
+    <rect x="514" y="294" width="118" height="20" rx="10" fill="#eff6ff"/><text x="573" y="308" fill="#2563eb" font-size="11" font-weight="600" text-anchor="middle">3 tool calls</text>
+    <text x="756" y="308" fill="#374151">run #142 · draft_fix</text>
+    <rect x="900" y="294" width="56" height="20" rx="10" fill="#fff7ed"/><text x="928" y="308" fill="#b45309" font-size="10" font-weight="600" text-anchor="middle">acpx</text>
+
+    <line x1="288" y1="324" x2="956" y2="324" stroke="#f5f6fa"/>
+    <text x="288" y="348" fill="#6b7280">09:38:50</text>
+    <circle cx="394" cy="343" r="9" fill="#fbcfe8"/><text x="394" y="347" fill="#9d174d" font-size="9" font-weight="700" text-anchor="middle">tr</text>
+    <text x="410" y="348" fill="#111827" font-weight="600">agent · triage</text>
+    <rect x="514" y="334" width="118" height="20" rx="10" fill="#f3e8ff"/><text x="573" y="348" fill="#7c3aed" font-size="11" font-weight="600" text-anchor="middle">acp turn · 14.6s</text>
+    <text x="756" y="348" fill="#374151">run #142 · reproduce</text>
+    <rect x="900" y="334" width="56" height="20" rx="10" fill="#fff7ed"/><text x="928" y="348" fill="#b45309" font-size="10" font-weight="600" text-anchor="middle">acpx</text>
+
+    <line x1="288" y1="364" x2="956" y2="364" stroke="#f5f6fa"/>
+    <text x="288" y="388" fill="#6b7280">09:25:11</text>
+    <circle cx="394" cy="383" r="9" fill="#e5e7eb"/><text x="394" y="387" fill="#6b7280" font-size="9" font-weight="700" text-anchor="middle">sys</text>
+    <text x="410" y="388" fill="#111827" font-weight="600">system</text>
+    <rect x="514" y="374" width="118" height="20" rx="10" fill="#eef2ff"/><text x="573" y="388" fill="#4f46e5" font-size="11" font-weight="600" text-anchor="middle">workflow started</text>
+    <text x="756" y="388" fill="#374151">run #142</text>
+    <rect x="900" y="374" width="56" height="20" rx="10" fill="#eef2ff"/><text x="928" y="388" fill="#4f46e5" font-size="10" font-weight="600" text-anchor="middle">temporal</text>
+
+    <line x1="288" y1="404" x2="956" y2="404" stroke="#f5f6fa"/>
+    <text x="288" y="428" fill="#6b7280">09:24:55</text>
+    <circle cx="394" cy="423" r="9" fill="#e0e7ff"/><text x="394" y="427" fill="#4f46e5" font-size="9" font-weight="700" text-anchor="middle">CM</text>
+    <text x="410" y="428" fill="#111827" font-weight="600">Chandan M.</text>
+    <rect x="514" y="414" width="118" height="20" rx="10" fill="#ecfdf5"/><text x="573" y="428" fill="#047857" font-size="11" font-weight="600" text-anchor="middle">run started</text>
+    <text x="756" y="428" fill="#374151">Bug triage and fix · v3</text>
+    <rect x="900" y="414" width="56" height="20" rx="10" fill="#fdf4ff"/><text x="928" y="428" fill="#a21caf" font-size="10" font-weight="600" text-anchor="middle">pg</text>
+
+    <line x1="288" y1="444" x2="956" y2="444" stroke="#f5f6fa"/>
+    <text x="288" y="468" fill="#6b7280">yesterday</text>
+    <circle cx="394" cy="463" r="9" fill="#e0e7ff"/><text x="394" y="467" fill="#4f46e5" font-size="9" font-weight="700" text-anchor="middle">CM</text>
+    <text x="410" y="468" fill="#111827" font-weight="600">Chandan M.</text>
+    <rect x="514" y="454" width="118" height="20" rx="10" fill="#ecfdf5"/><text x="573" y="468" fill="#047857" font-size="11" font-weight="600" text-anchor="middle">flow edited</text>
+    <text x="756" y="468" fill="#374151">Bug triage and fix · v2→v3</text>
+    <rect x="900" y="454" width="56" height="20" rx="10" fill="#fdf4ff"/><text x="928" y="468" fill="#a21caf" font-size="10" font-weight="600" text-anchor="middle">pg</text>
+
+    <line x1="288" y1="484" x2="956" y2="484" stroke="#f5f6fa"/>
+    <text x="288" y="508" fill="#6b7280">yesterday</text>
+    <circle cx="394" cy="503" r="9" fill="#e5e7eb"/><text x="394" y="507" fill="#6b7280" font-size="9" font-weight="700" text-anchor="middle">sys</text>
+    <text x="410" y="508" fill="#111827" font-weight="600">system</text>
+    <rect x="514" y="494" width="118" height="20" rx="10" fill="#ecfdf5"/><text x="573" y="508" fill="#047857" font-size="11" font-weight="600" text-anchor="middle">resource associated</text>
+    <text x="756" y="508" fill="#374151">gh-cli.zip → dev</text>
+    <rect x="900" y="494" width="56" height="20" rx="10" fill="#fdf4ff"/><text x="928" y="508" fill="#a21caf" font-size="10" font-weight="600" text-anchor="middle">pg</text>
+
+    <line x1="288" y1="524" x2="956" y2="524" stroke="#f5f6fa"/>
+    <text x="288" y="548" fill="#6b7280">2d ago</text>
+    <circle cx="394" cy="543" r="9" fill="#e0e7ff"/><text x="394" y="547" fill="#4f46e5" font-size="9" font-weight="700" text-anchor="middle">CM</text>
+    <text x="410" y="548" fill="#111827" font-weight="600">Chandan M.</text>
+    <rect x="514" y="534" width="118" height="20" rx="10" fill="#ecfdf5"/><text x="573" y="548" fill="#047857" font-size="11" font-weight="600" text-anchor="middle">resource uploaded</text>
+    <text x="756" y="548" fill="#374151">gh-cli.zip · 220 KB</text>
+    <rect x="900" y="534" width="56" height="20" rx="10" fill="#fdf4ff"/><text x="928" y="548" fill="#a21caf" font-size="10" font-weight="600" text-anchor="middle">pg</text>
+
+    <line x1="288" y1="564" x2="956" y2="564" stroke="#f5f6fa"/>
+    <text x="288" y="588" fill="#6b7280">2d ago</text>
+    <circle cx="394" cy="583" r="9" fill="#e0e7ff"/><text x="394" y="587" fill="#4f46e5" font-size="9" font-weight="700" text-anchor="middle">CM</text>
+    <text x="410" y="588" fill="#111827" font-weight="600">Chandan M.</text>
+    <rect x="514" y="574" width="118" height="20" rx="10" fill="#ecfdf5"/><text x="573" y="588" fill="#047857" font-size="11" font-weight="600" text-anchor="middle">agent created</text>
+    <text x="756" y="588" fill="#374151">dev · .pi workspace</text>
+    <rect x="900" y="574" width="56" height="20" rx="10" fill="#fdf4ff"/><text x="928" y="588" fill="#a21caf" font-size="10" font-weight="600" text-anchor="middle">pg</text>
+
+    <line x1="288" y1="604" x2="956" y2="604" stroke="#f5f6fa"/>
+    <text x="288" y="628" fill="#6b7280">3d ago</text>
+    <circle cx="394" cy="623" r="9" fill="#e0e7ff"/><text x="394" y="627" fill="#4f46e5" font-size="9" font-weight="700" text-anchor="middle">CM</text>
+    <text x="410" y="628" fill="#111827" font-weight="600">Chandan M.</text>
+    <rect x="514" y="614" width="118" height="20" rx="10" fill="#ecfdf5"/><text x="573" y="628" fill="#047857" font-size="11" font-weight="600" text-anchor="middle">group created</text>
+    <text x="756" y="628" fill="#374151">Support</text>
+    <rect x="900" y="614" width="56" height="20" rx="10" fill="#fdf4ff"/><text x="928" y="628" fill="#a21caf" font-size="10" font-weight="600" text-anchor="middle">pg</text>
+
+    <line x1="288" y1="644" x2="956" y2="644" stroke="#f5f6fa"/>
+    <text x="288" y="668" fill="#6b7280">4d ago</text>
+    <circle cx="394" cy="663" r="9" fill="#e5e7eb"/><text x="394" y="667" fill="#6b7280" font-size="9" font-weight="700" text-anchor="middle">sys</text>
+    <text x="410" y="668" fill="#111827" font-weight="600">system</text>
+    <rect x="514" y="654" width="148" height="20" rx="10" fill="#f3f0ff"/><text x="588" y="668" fill="#6d28d9" font-size="11" font-weight="600" text-anchor="middle">common pi agent created</text>
+    <text x="690" y="668" fill="#374151">flow-author · locked</text>
+    <rect x="900" y="654" width="56" height="20" rx="10" fill="#fdf4ff"/><text x="928" y="668" fill="#a21caf" font-size="10" font-weight="600" text-anchor="middle">pg</text>
+  </g>
+
+  <!-- RIGHT: audit sources -->
+  <g filter="url(#card)"><rect x="996" y="164" width="252" height="544" rx="14" fill="#ffffff"/></g>
+  <text x="1018" y="194" fill="#111827" font-size="14" font-weight="700">Audit sources</text>
+  <text x="1018" y="216" fill="#9ca3af" font-size="11">three complementary layers</text>
+  <line x1="1018" y1="232" x2="1226" y2="232" stroke="#f0f1f5"/>
+
+  <!-- Source: Postgres audit_event -->
+  <rect x="1018" y="248" width="208" height="120" rx="12" fill="#faf5ff" stroke="#f3e8ff"/>
+  <rect x="1034" y="262" width="36" height="36" rx="10" fill="#fdf4ff"/><text x="1052" y="287" fill="#a21caf" font-size="14" font-weight="700" text-anchor="middle">pg</text>
+  <text x="1080" y="278" fill="#111827" font-size="13" font-weight="700">Postgres audit_event</text>
+  <text x="1080" y="294" fill="#9ca3af" font-size="11">business events</text>
+  <text x="1034" y="328" fill="#6b7280" font-size="11">create / edit / approve /</text>
+  <text x="1034" y="344" fill="#6b7280" font-size="11">upload / invoke</text>
+  <rect x="1140" y="332" width="74" height="24" rx="8" fill="#ffffff" stroke="#e9d5ff"/><text x="1177" y="348" fill="#6d28d9" font-size="11" font-weight="600" text-anchor="middle">Query →</text>
+
+  <!-- Source: acpx trace bundles -->
+  <rect x="1018" y="380" width="208" height="120" rx="12" fill="#fff7ed" stroke="#ffedd5"/>
+  <rect x="1034" y="394" width="36" height="36" rx="10" fill="#ffedd5"/><text x="1052" y="419" fill="#b45309" font-size="14" font-weight="700" text-anchor="middle">ax</text>
+  <text x="1080" y="410" fill="#111827" font-size="13" font-weight="700">acpx trace bundles</text>
+  <text x="1080" y="426" fill="#9ca3af" font-size="11">per-step + agent turns</text>
+  <text x="1034" y="460" fill="#6b7280" font-size="11">prompts · tool calls · outputs</text>
+  <text x="1034" y="476" fill="#9ca3af" font-size="11">~/.acpx/flows/runs/</text>
+  <rect x="1124" y="466" width="90" height="24" rx="8" fill="#ffffff" stroke="#fed7aa"/><text x="1169" y="482" fill="#b45309" font-size="11" font-weight="600" text-anchor="middle">View bundle →</text>
+
+  <!-- Source: Temporal event history -->
+  <rect x="1018" y="512" width="208" height="120" rx="12" fill="#eef2ff" stroke="#e0e7ff"/>
+  <rect x="1034" y="526" width="36" height="36" rx="10" fill="#e0e7ff"/><text x="1052" y="551" fill="#4f46e5" font-size="14" font-weight="700" text-anchor="middle">τ</text>
+  <text x="1080" y="542" fill="#111827" font-size="13" font-weight="700">Temporal history</text>
+  <text x="1080" y="558" fill="#9ca3af" font-size="11">durable run record</text>
+  <text x="1034" y="592" fill="#6b7280" font-size="11">workflow + activity events</text>
+  <text x="1034" y="608" fill="#9ca3af" font-size="11">replay-ready</text>
+  <rect x="1112" y="598" width="106" height="24" rx="8" fill="#ffffff" stroke="#c7d2fe"/><text x="1165" y="614" fill="#4f46e5" font-size="11" font-weight="600" text-anchor="middle">Open Web UI →</text>
+
+  <line x1="1018" y1="650" x2="1226" y2="650" stroke="#f0f1f5"/>
+  <rect x="1018" y="662" width="208" height="34" rx="10" fill="#ffffff" stroke="#d8dbe6"/><text x="1122" y="684" fill="#374151" font-size="12" font-weight="600" text-anchor="middle">Export combined trace</text>
+</svg>
