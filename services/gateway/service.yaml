@@ -1,0 +1,16 @@
+name: gateway
+description: Single gRPC + gRPC-Web aggregator for the desktop app and remote clients.
+grpc_port: 7000
+http_port: 7100
+schema: (none)
+streams:
+  produced: []
+  consumed:
+    - agents.*
+    - flows.*
+    - runs.*
+    - audit.event
+env_required:
+  - GATEWAY_AGENTS_ADDR
+  - GATEWAY_FLOW_ADDR
+  - GATEWAY_ORCHESTRATOR_ADDR

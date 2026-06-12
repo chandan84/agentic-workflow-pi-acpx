@@ -1,0 +1,23 @@
+name: flow-author
+version: 1
+description: |
+  Generates Flow IR v1 documents from natural-language descriptions of a
+  workflow. The output is consumed by flow-service to be validated, codegen'd
+  to acpx TypeScript, and executed by orchestrator-service through Temporal.
+
+model:
+  provider: anthropic
+  name: claude-opus-4-8
+  temperature: 0.2
+
+skills:
+  - flow-author
+
+scopes:
+  - read:guidelines
+  - read:schemas
+  - emit:flow-ir
+
+limits:
+  max_iterations: 8
+  max_output_tokens: 8000

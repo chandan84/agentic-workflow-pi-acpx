@@ -1,0 +1,20 @@
+service: agents
+env: dev
+grpc_addr: ":7001"
+http_addr: ":7101"
+log_level: info
+log_format: json
+postgres:
+  dsn: postgres://awpa:awpa@localhost:5432/awpa?sslmode=disable
+  schema: agents
+nats:
+  url: nats://localhost:4222
+  stream: AWPA
+auth:
+  mode: none
+otel:
+  enabled: false
+features: {}
+stubs:
+  store: real
+  bus:   real

@@ -1,0 +1,20 @@
+name: orchestrator
+description: Temporal client + worker driving acpx flow runs segmented at checkpoints.
+grpc_port: 7003
+http_port: 7103
+schema: runs
+streams:
+  produced:
+    - runs.run.started
+    - runs.run.updated
+    - runs.run.completed
+    - runs.run.failed
+    - runs.checkpoint.awaiting
+    - runs.checkpoint.resolved
+    - runs.segment.started
+    - runs.segment.finished
+    - runs.workitem.emitted
+  consumed: []
+env_required:
+  - ORCHESTRATOR_POSTGRES_DSN
+  - ORCHESTRATOR_TEMPORAL_HOST_PORT

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "hello-review",
+  "name": "Hello + Review",
+  "description": "Draft a greeting, get human approval, post it.",
+  "start": "draft",
+  "ends": ["done"],
+  "nodes": [
+    { "id": "draft", "kind": "acp", "title": "Draft greeting", "agentId": "writer-1", "skill": "draft", "prompt": "Write a friendly hello." },
+    { "id": "review", "kind": "checkpoint", "title": "Human review", "prompt": "Approve the draft?", "approvers": ["alice"], "timeoutSeconds": 3600, "onTimeout": "escalate" },
+    { "id": "post", "kind": "action", "title": "Post greeting", "fn": "post_message", "args": { "channel": "general" } },
+    { "id": "done", "kind": "end", "title": "Done" }
+  ],
+  "edges": [
+    { "from": "draft",  "to": "review" },
+    { "from": "review", "to": "post" },
+    { "from": "post",   "to": "done" }
+  ],
+  "workItems": [
+    { "nodeId": "review", "kind": "approval" }
+  ]
+}

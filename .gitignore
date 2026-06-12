@@ -1,0 +1,38 @@
+# Go
+*.test
+*.out
+/bin/
+/dist/
+coverage.*
+
+# Node / Vite
+node_modules/
+apps/desktop/web/dist/
+apps/desktop/web/.vite/
+
+# Rust / Tauri
+target/
+apps/desktop/src-tauri/target/
+
+# Editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local env
+.env
+.env.local
+*.local.yaml
+
+# Runtime artefacts
+/tmp/
+/.pi-workspaces/
+/trace-bundles/
+/data/postgres/
+/data/nats/
+/data/temporal/

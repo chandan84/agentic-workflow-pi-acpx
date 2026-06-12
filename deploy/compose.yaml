@@ -1,0 +1,61 @@
+name: agentic-workflow-pi-acpx
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: awpa-postgres
+    environment:
+      POSTGRES_USER: awpa
+      POSTGRES_PASSWORD: awpa
+      POSTGRES_DB: awpa
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U awpa -d awpa"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  nats:
+    image: nats:2.10-alpine
+    container_name: awpa-nats
+    command: ["-js", "-sd", "/data"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - ./data/nats:/data
+    healthcheck:
+      test: ["CMD", "nats-server", "--help"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  temporal:
+    image: temporalio/auto-setup:1.24
+    container_name: awpa-temporal
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: awpa
+      POSTGRES_PWD: awpa
+      POSTGRES_SEEDS: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "7233:7233"
+      - "8233:8233"
+
+  temporal-ui:
+    image: temporalio/ui:2.27.2
+    container_name: awpa-temporal-ui
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_CORS_ORIGINS: http://localhost:1420
+    ports:
+      - "8080:8080"
+    depends_on:
+      - temporal

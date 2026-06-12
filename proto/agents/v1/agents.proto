@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package agents.v1;
+
+option go_package = "github.com/chandan84/agentic-workflow-pi-acpx/pkg/protogen/agents/v1;agentsv1";
+
+import "common/v1/common.proto";
+import "google/protobuf/timestamp.proto";
+
+message AgentGroup {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message Agent {
+  string id = 1;
+  string group_id = 2;
+  string name = 3;
+  string role = 4;            // e.g. "reviewer", "implementer"
+  string pi_workspace = 5;    // .pi/ workspace dir for isolation
+  map<string,string> env = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
+
+message ResourceBundle {
+  string id = 1;
+  string name = 2;
+  string kind = 3;            // mcp|tool|fs|secret
+  string spec = 4;            // JSON
+}
+
+message AgentResource {
+  string agent_id = 1;
+  string resource_id = 2;
+  string mount_path = 3;
+}
+
+message CreateGroupRequest  { string name = 1; string description = 2; }
+message CreateGroupResponse { AgentGroup group = 1; }
+message ListGroupsRequest   { common.v1.Page page = 1; }
+message ListGroupsResponse  { repeated AgentGroup groups = 1; common.v1.PageInfo page_info = 2; }
+
+message CreateAgentRequest  { string group_id = 1; string name = 2; string role = 3; map<string,string> env = 4; }
+message CreateAgentResponse { Agent agent = 1; }
+message ListAgentsRequest   { string group_id = 1; common.v1.Page page = 2; }
+message ListAgentsResponse  { repeated Agent agents = 1; common.v1.PageInfo page_info = 2; }
+message GetAgentRequest     { string id = 1; }
+message GetAgentResponse    { Agent agent = 1; }
+
+message CreateResourceRequest  { string name = 1; string kind = 2; string spec = 3; }
+message CreateResourceResponse { ResourceBundle resource = 1; }
+message ListResourcesRequest   { common.v1.Page page = 1; }
+message ListResourcesResponse  { repeated ResourceBundle resources = 1; common.v1.PageInfo page_info = 2; }
+message AttachResourceRequest  { string agent_id = 1; string resource_id = 2; string mount_path = 3; }
+message AttachResourceResponse { AgentResource link = 1; }
+
+service AgentsService {
+  rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse);
+  rpc ListGroups (ListGroupsRequest)  returns (ListGroupsResponse);
+
+  rpc CreateAgent(CreateAgentRequest) returns (CreateAgentResponse);
+  rpc ListAgents (ListAgentsRequest)  returns (ListAgentsResponse);
+  rpc GetAgent   (GetAgentRequest)    returns (GetAgentResponse);
+
+  rpc CreateResource(CreateResourceRequest) returns (CreateResourceResponse);
+  rpc ListResources (ListResourcesRequest)  returns (ListResourcesResponse);
+  rpc AttachResource(AttachResourceRequest) returns (AttachResourceResponse);
+}

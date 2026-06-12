@@ -1,0 +1,17 @@
+service: gateway
+env: dev
+grpc_addr: ":7000"
+http_addr: ":7100"
+log_level: info
+log_format: json
+nats:
+  url: nats://localhost:4222
+  stream: AWPA
+auth:
+  mode: none
+features:
+  audit_stream_enabled: true
+upstreams:
+  agents:       localhost:7001
+  flow:         localhost:7002
+  orchestrator: localhost:7003

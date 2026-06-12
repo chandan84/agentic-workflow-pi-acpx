@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  go:
+    name: Go build, lint, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.22' }
+      - name: Install buf
+        run: go install github.com/bufbuild/buf/cmd/buf@v1.45.0
+      - name: Install proto plugins
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.34.2
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
+      - name: buf lint
+        working-directory: proto
+        run: buf lint
+      - name: buf breaking
+        working-directory: proto
+        run: buf breaking --against 'https://github.com/${{ github.repository }}.git#branch=main,subdir=proto' || true
+      - name: buf generate
+        working-directory: proto
+        run: buf generate
+      - name: Build all modules
+        run: |
+          for m in pkg/config pkg/obs pkg/events pkg/flowir pkg/authn pkg/health pkg/testutil pkg/runtime pkg/protogen \
+                  services/agents services/flow services/orchestrator services/gateway tests/e2e; do
+            (cd "$m" && go build ./...) || exit 1
+          done
+      - name: Test all modules
+        run: |
+          for m in pkg/config pkg/obs pkg/events pkg/flowir pkg/authn pkg/health pkg/runtime \
+                  services/agents services/flow services/orchestrator services/gateway tests/e2e; do
+            (cd "$m" && go test ./...) || exit 1
+          done
+
+  lint:
+    name: golangci-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.22' }
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.59.1
+          args: --timeout=5m ./...
+          working-directory: pkg/config
+
+  web:
+    name: Desktop web build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: web build
+        working-directory: apps/desktop/web
+        run: |
+          if [ -f package.json ]; then
+            npm ci || npm install
+            npm run build
+          fi
+
+  tauri:
+    name: Tauri shell cargo check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: cargo check
+        working-directory: apps/desktop/src-tauri
+        run: |
+          if [ -f Cargo.toml ]; then
+            sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+            cargo check
+          fi
+
+  docs:
+    name: Mermaid + SVG sanity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: SVG well-formedness
+        run: |
+          for f in $(find docs -name '*.svg'); do
+            xmllint --noout "$f"
+          done
+      - name: Mermaid syntax (fenced blocks)
+        run: |
+          grep -RIn '```mermaid' docs/ || true

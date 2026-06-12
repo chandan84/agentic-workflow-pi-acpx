@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package flows.v1;
+
+option go_package = "github.com/chandan84/agentic-workflow-pi-acpx/pkg/protogen/flows/v1;flowsv1";
+
+import "common/v1/common.proto";
+import "google/protobuf/timestamp.proto";
+
+message Flow {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message FlowVersion {
+  string id = 1;
+  string flow_id = 2;
+  int32  version = 3;
+  string ir_json = 4;         // canonical Flow IR (JSON)
+  string flow_ts = 5;         // codegen output (.flow.ts contents)
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message GenerateRequest {
+  string flow_id = 1;
+  string prompt = 2;
+  string author_agent_id = 3; // if empty, default flow-author
+}
+
+message GenerateChunk {
+  oneof body {
+    string partial_ir = 1;    // streamed partial IR
+    string log_line = 2;
+    FlowVersion completed = 3;
+    common.v1.Error error = 4;
+  }
+}
+
+message ValidateRequest  { string ir_json = 1; }
+message ValidateResponse { repeated string errors = 1; }
+
+message CodegenRequest  { string ir_json = 1; }
+message CodegenResponse { string flow_ts = 1; }
+
+message CreateFlowRequest  { string name = 1; string description = 2; }
+message CreateFlowResponse { Flow flow = 1; }
+message ListFlowsRequest   { common.v1.Page page = 1; }
+message ListFlowsResponse  { repeated Flow flows = 1; common.v1.PageInfo page_info = 2; }
+message GetFlowRequest     { string id = 1; }
+message GetFlowResponse    { Flow flow = 1; repeated FlowVersion versions = 2; }
+
+message PutVersionRequest  { string flow_id = 1; string ir_json = 2; }
+message PutVersionResponse { FlowVersion version = 1; }
+
+service FlowService {
+  rpc CreateFlow(CreateFlowRequest) returns (CreateFlowResponse);
+  rpc ListFlows (ListFlowsRequest)  returns (ListFlowsResponse);
+  rpc GetFlow   (GetFlowRequest)    returns (GetFlowResponse);
+  rpc PutVersion(PutVersionRequest) returns (PutVersionResponse);
+
+  rpc Validate(ValidateRequest) returns (ValidateResponse);
+  rpc Codegen (CodegenRequest)  returns (CodegenResponse);
+
+  rpc Generate(GenerateRequest) returns (stream GenerateChunk);
+}

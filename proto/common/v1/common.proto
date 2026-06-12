@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package common.v1;
+
+option go_package = "github.com/chandan84/agentic-workflow-pi-acpx/pkg/protogen/common/v1;commonv1";
+
+import "google/protobuf/timestamp.proto";
+
+message Page {
+  int32 limit = 1;
+  string cursor = 2;
+}
+
+message PageInfo {
+  string next_cursor = 1;
+  bool   has_more = 2;
+}
+
+message Error {
+  string code = 1;
+  string message = 2;
+}
+
+message AuditRef {
+  string run_id = 1;
+  string node_id = 2;
+  google.protobuf.Timestamp at = 3;
+}

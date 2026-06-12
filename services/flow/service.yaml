@@ -1,0 +1,15 @@
+name: flow
+description: Prompt → Flow IR generation, IR CRUD/validation/codegen, IR↔graph helpers.
+grpc_port: 7002
+http_port: 7102
+schema: flows
+streams:
+  produced:
+    - flows.flow.created
+    - flows.flow.version.created
+    - flows.flow.generation.log
+    - flows.flow.generation.done
+    - flows.flow.generation.error
+  consumed: []
+env_required:
+  - FLOW_POSTGRES_DSN

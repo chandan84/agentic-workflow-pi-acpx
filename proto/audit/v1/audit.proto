@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package audit.v1;
+
+option go_package = "github.com/chandan84/agentic-workflow-pi-acpx/pkg/protogen/audit/v1;auditv1";
+
+import "common/v1/common.proto";
+import "google/protobuf/timestamp.proto";
+
+message AuditEvent {
+  string id = 1;
+  string run_id = 2;
+  string node_id = 3;
+  string layer = 4;           // temporal|acpx|app
+  string kind = 5;
+  string payload_json = 6;
+  google.protobuf.Timestamp at = 7;
+}
+
+message ListAuditRequest  { string run_id = 1; common.v1.Page page = 2; }
+message ListAuditResponse { repeated AuditEvent events = 1; common.v1.PageInfo page_info = 2; }
+message TailAuditRequest  { string run_id = 1; }
+
+service AuditService {
+  rpc ListAudit(ListAuditRequest) returns (ListAuditResponse);
+  rpc TailAudit(TailAuditRequest) returns (stream AuditEvent);
+}

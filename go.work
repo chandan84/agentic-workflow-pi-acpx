@@ -1,0 +1,18 @@
+go 1.22
+
+use (
+  ./pkg/config
+  ./pkg/obs
+  ./pkg/events
+  ./pkg/flowir
+  ./pkg/authn
+  ./pkg/health
+  ./pkg/testutil
+  ./pkg/runtime
+  ./pkg/protogen
+  ./services/agents
+  ./services/flow
+  ./services/orchestrator
+  ./services/gateway
+  ./tests/e2e
+)

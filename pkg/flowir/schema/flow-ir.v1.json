@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://awpa.dev/schemas/flow-ir.v1.json",
+  "title": "Flow IR v1",
+  "type": "object",
+  "required": ["schemaVersion", "id", "name", "nodes", "edges", "start"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id":            { "type": "string", "minLength": 1 },
+    "name":          { "type": "string", "minLength": 1 },
+    "description":   { "type": "string" },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "roles": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "start":  { "type": "string", "minLength": 1 },
+    "ends":   { "type": "array",  "items": { "type": "string" }, "minItems": 1 },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/node" }
+    },
+    "edges": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/edge" }
+    },
+    "workItems": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/workItem" }
+    }
+  },
+  "definitions": {
+    "node": {
+      "type": "object",
+      "required": ["id", "kind"],
+      "additionalProperties": true,
+      "properties": {
+        "id":    { "type": "string", "minLength": 1 },
+        "kind":  { "enum": ["acp", "action", "compute", "decision", "checkpoint", "fork", "join", "end"] },
+        "title": { "type": "string" },
+        "agentId":   { "type": "string" },
+        "skill":     { "type": "string" },
+        "prompt":    { "type": "string" },
+        "fn":        { "type": "string" },
+        "args":      { "type": "object" },
+        "branches":  {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["when", "to"],
+            "properties": {
+              "when": { "type": "string" },
+              "to":   { "type": "string" }
+            }
+          }
+        },
+        "approvers": { "type": "array", "items": { "type": "string" } },
+        "timeoutSeconds": { "type": "integer", "minimum": 0 },
+        "onTimeout":      { "enum": ["escalate", "abort", "auto-approve"] }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": ["from", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "from":      { "type": "string" },
+        "to":        { "type": "string" },
+        "condition": { "type": "string" }
+      }
+    },
+    "workItem": {
+      "type": "object",
+      "required": ["nodeId", "kind"],
+      "additionalProperties": true,
+      "properties": {
+        "nodeId":   { "type": "string" },
+        "kind":     { "enum": ["task", "approval", "review"] },
+        "schema":   { "type": "object" }
+      }
+    }
+  }
+}

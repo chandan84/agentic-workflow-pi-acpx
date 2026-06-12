@@ -1,0 +1,13 @@
+name: agents
+description: Agent groups, agents, resource bundles. Owns the `agents` Postgres schema.
+grpc_port: 7001
+http_port: 7101
+schema: agents
+streams:
+  produced:
+    - agents.agent.created
+    - agents.group.created
+    - agents.resource.linked
+  consumed: []
+env_required:
+  - AGENTS_POSTGRES_DSN

@@ -1,0 +1,76 @@
+version: '3'
+
+vars:
+  MODULES:
+    sh: |
+      printf '%s\n' \
+        pkg/config pkg/obs pkg/events pkg/flowir pkg/authn pkg/health pkg/testutil pkg/runtime pkg/protogen \
+        services/agents services/flow services/orchestrator services/gateway
+
+tasks:
+  default:
+    desc: List tasks
+    cmds:
+      - task --list
+
+  generate:
+    desc: Generate protos and JSON schema bindings
+    cmds:
+      - cd proto && buf generate || echo "buf not installed; skipping (CI installs buf)"
+
+  build:
+    desc: Build every Go module
+    cmds:
+      - for m in {{.MODULES}}; do (cd "$m" && go build ./...) || exit 1; done
+
+  test:
+    desc: Test every Go module
+    cmds:
+      - for m in {{.MODULES}}; do (cd "$m" && go test ./...) || exit 1; done
+
+  lint:
+    desc: Lint every Go module
+    cmds:
+      - for m in {{.MODULES}}; do (cd "$m" && golangci-lint run ./...) || exit 1; done
+
+  fmt:
+    desc: Format every Go module
+    cmds:
+      - for m in {{.MODULES}}; do (cd "$m" && gofmt -s -w . && goimports -w -local github.com/chandan84/agentic-workflow-pi-acpx .) ; done
+
+  dev-up:
+    desc: Bring up Postgres + NATS + Temporal dev-server
+    cmds:
+      - docker compose -f deploy/compose.yaml up -d
+      - scripts/wait-for-deps.sh
+      - scripts/migrate-all.sh
+
+  dev-down:
+    desc: Tear down dev infra
+    cmds:
+      - docker compose -f deploy/compose.yaml down
+
+  db-reset:
+    desc: Wipe and re-migrate all schemas
+    cmds:
+      - scripts/db-reset.sh
+
+  migrate-new:
+    desc: Create a new goose migration. SCHEMA=<schema> NAME=<name>
+    cmds:
+      - goose -dir db/migrations/{{.SCHEMA}} create {{.NAME}} sql
+
+  er-gen:
+    desc: Regenerate ER section of docs/spec/data-model.md
+    cmds:
+      - scripts/er-gen.sh
+
+  web-build:
+    desc: Build the desktop web app
+    cmds:
+      - cd apps/desktop/web && npm install && npm run build
+
+  tauri-check:
+    desc: cargo check for the Tauri shell
+    cmds:
+      - cd apps/desktop/src-tauri && cargo check

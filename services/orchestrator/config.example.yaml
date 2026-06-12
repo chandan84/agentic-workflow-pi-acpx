@@ -1,0 +1,23 @@
+service: orchestrator
+env: dev
+grpc_addr: ":7003"
+http_addr: ":7103"
+log_level: info
+log_format: json
+postgres:
+  dsn: postgres://awpa:awpa@localhost:5432/awpa?sslmode=disable
+  schema: runs
+nats:
+  url: nats://localhost:4222
+  stream: AWPA
+temporal:
+  host_port: localhost:7233
+  namespace: default
+  task_queue: awpa-orchestrator
+auth:
+  mode: none
+stubs:
+  store:    real
+  bus:      real
+  runtime:  stub
+  temporal: stub

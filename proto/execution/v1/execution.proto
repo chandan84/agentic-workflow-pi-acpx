@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package execution.v1;
+
+option go_package = "github.com/chandan84/agentic-workflow-pi-acpx/pkg/protogen/execution/v1;executionv1";
+
+import "common/v1/common.proto";
+import "google/protobuf/timestamp.proto";
+
+message Run {
+  string id = 1;
+  string flow_id = 2;
+  string flow_version_id = 3;
+  string status = 4;          // pending|running|awaiting_checkpoint|completed|failed|cancelled
+  string current_node = 5;
+  google.protobuf.Timestamp started_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message WorkItem {
+  string id = 1;
+  string run_id = 2;
+  string node_id = 3;
+  string kind = 4;            // task|approval|review
+  string status = 5;          // open|claimed|done|skipped
+  string payload_json = 6;
+  string assignee = 7;
+}
+
+message CheckpointRequest {
+  string id = 1;
+  string run_id = 2;
+  string node_id = 3;
+  string prompt = 4;
+  string status = 5;          // awaiting|approved|rejected|timeout
+  google.protobuf.Timestamp deadline = 6;
+}
+
+message StartRunRequest  { string flow_id = 1; string flow_version_id = 2; string input_json = 3; }
+message StartRunResponse { Run run = 1; }
+message GetRunRequest    { string id = 1; }
+message GetRunResponse   { Run run = 1; }
+message ListRunsRequest  { string flow_id = 1; common.v1.Page page = 2; }
+message ListRunsResponse { repeated Run runs = 1; common.v1.PageInfo page_info = 2; }
+
+message ApproveCheckpointRequest  { string checkpoint_id = 1; string approver = 2; string note = 3; }
+message ApproveCheckpointResponse { CheckpointRequest checkpoint = 1; }
+message RejectCheckpointRequest   { string checkpoint_id = 1; string approver = 2; string note = 3; }
+message RejectCheckpointResponse  { CheckpointRequest checkpoint = 1; }
+
+message StreamRunEventsRequest { string run_id = 1; }
+message RunEvent {
+  string run_id = 1;
+  string node_id = 2;
+  string kind = 3;            // started|finished|log|checkpoint_awaiting|work_item|error
+  string payload_json = 4;
+  google.protobuf.Timestamp at = 5;
+}
+
+service ExecutionService {
+  rpc StartRun(StartRunRequest)   returns (StartRunResponse);
+  rpc GetRun  (GetRunRequest)     returns (GetRunResponse);
+  rpc ListRuns(ListRunsRequest)   returns (ListRunsResponse);
+
+  rpc ApproveCheckpoint(ApproveCheckpointRequest) returns (ApproveCheckpointResponse);
+  rpc RejectCheckpoint (RejectCheckpointRequest)  returns (RejectCheckpointResponse);
+
+  rpc StreamRunEvents(StreamRunEventsRequest) returns (stream RunEvent);
+}
