@@ -1,0 +1,46 @@
+---
+# EFS CSI StorageClass
+# Prerequisite: aws-efs-csi-driver must be installed in the cluster.
+# Replace {{EFS_FILESYSTEM_ID}} with your actual EFS filesystem ID (e.g., fs-0123456789abcdef0)
+# before applying this manifest.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: efs-sc
+  labels:
+    app.kubernetes.io/part-of: pispec-flow
+  annotations:
+    description: "EFS-backed StorageClass for shared ReadWriteMany workspaces"
+provisioner: efs.csi.aws.com
+volumeBindingMode: Immediate
+# reclaimPolicy Retain protects data on PVC deletion — change to Delete only in dev/test
+reclaimPolicy: Retain
+parameters:
+  provisioningMode: efs-ap           # Uses EFS Access Points for per-PVC isolation
+  fileSystemId: "{{EFS_FILESYSTEM_ID}}"
+  directoryPerms: "700"
+  gidRangeStart: "1000"
+  gidRangeEnd: "2000"
+  basePath: "/pispec"                # Root path within the EFS filesystem
+---
+# PersistentVolumeClaim — shared workspace for all agent pods and the viewer
+# Mounted ReadWriteMany so multiple pods can read/write concurrently (EFS supports this natively)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pispec-efs-pvc
+  namespace: pi-agents
+  labels:
+    app.kubernetes.io/part-of: pispec-flow
+    app.kubernetes.io/component: storage
+  annotations:
+    # Replace {{EFS_FILESYSTEM_ID}} with actual EFS filesystem ID
+    efs.csi.aws.com/filesystem-id: "{{EFS_FILESYSTEM_ID}}"
+    description: "Shared EFS workspace — mounted at /workspace on all agent pods"
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc
+  resources:
+    requests:
+      storage: 20Gi

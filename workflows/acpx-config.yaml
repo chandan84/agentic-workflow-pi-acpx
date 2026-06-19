@@ -1,0 +1,311 @@
+# acpx Headless CLI Configuration — PiSpec Flow
+#
+# This file configures the acpx orchestrator runtime for the PiSpec workflow.
+# Referenced by pispec-orchestrator.yaml via config_ref keys.
+#
+# Sections:
+#   agents       — agent endpoints, models, and per-agent settings
+#   sessions     — session storage and restart behaviour
+#   orchestrator — runtime execution flags
+
+# ─────────────────────────────────────────────────────────────
+# AGENTS
+# ─────────────────────────────────────────────────────────────
+agents:
+
+  planner:
+    # Primary spec author agent running in the pi-agents namespace.
+    endpoint: ws://pi-planner.pi-agents.svc.cluster.local:8787
+    model: claude-opus-4-7
+    session_persistence: true
+
+    # Skills available to this agent
+    skills:
+      - openspec-grill
+
+    # OpenSpec CLI capabilities
+    capabilities:
+      - openspec:new-change
+      - openspec:apply-change
+      - openspec:verify-change
+      - openspec:archive-change
+      - mermaid:generate
+
+    # Connection settings
+    connection:
+      timeout: 30s
+      reconnect_max_retries: 5
+      reconnect_backoff: exponential
+      reconnect_initial_delay: 2s
+      reconnect_max_delay: 60s
+      heartbeat_interval: 15s
+      heartbeat_timeout: 10s
+
+    # Model inference settings
+    inference:
+      max_tokens: 8192
+      temperature: 0.2              # low temp for precise spec writing
+      top_p: 0.95
+      stop_sequences: []
+      stream: true
+
+    # Interactive mode settings (used by openspec-grill)
+    interactive:
+      prompt_queueing: true         # queue incoming prompts; do not drop
+      yield_on_human_input: true    # pause generation when awaiting human answer
+      input_timeout: 4h             # maximum wait per human answer
+
+    # Filesystem access restrictions
+    filesystem:
+      allowed_paths:
+        - /workspace/openspec
+        - /workspace/sessions
+      read: true
+      write: true
+
+    # Shell command restrictions
+    shell:
+      allowed_commands:
+        - openspec
+      deny_patterns:
+        - "rm -rf"
+        - "sudo"
+
+    # Per-agent resource limits
+    resources:
+      max_concurrent_sessions: 1
+      max_prompt_length: 32768      # tokens
+
+  reviewer:
+    # Structural and semantic spec reviewer.
+    endpoint: ws://pi-reviewer.pi-agents.svc.cluster.local:8788
+    model: gpt-5.5
+    session_persistence: true
+
+    capabilities:
+      - openspec:verify-change
+      - openspec:review
+
+    connection:
+      timeout: 30s
+      reconnect_max_retries: 5
+      reconnect_backoff: exponential
+      reconnect_initial_delay: 2s
+      reconnect_max_delay: 60s
+      heartbeat_interval: 15s
+      heartbeat_timeout: 10s
+
+    inference:
+      max_tokens: 4096
+      temperature: 0.1              # very low: reviewer should be deterministic
+      top_p: 0.9
+      stream: true
+
+    filesystem:
+      allowed_paths:
+        - /workspace/openspec
+      read: true
+      write: true                   # must write verify-result.json
+
+    shell:
+      allowed_commands:
+        - openspec
+      deny_patterns:
+        - "rm -rf"
+        - "sudo"
+
+    resources:
+      max_concurrent_sessions: 2   # reviewer can handle parallel review runs
+      max_prompt_length: 16384
+
+  security:
+    # Security and threat-model reviewer.
+    endpoint: ws://pi-security.pi-agents.svc.cluster.local:8789
+    model: claude-sonnet-4-6
+    session_persistence: true
+
+    capabilities:
+      - openspec:explore-security
+      - security:threat-model
+
+    connection:
+      timeout: 30s
+      reconnect_max_retries: 5
+      reconnect_backoff: exponential
+      reconnect_initial_delay: 2s
+      reconnect_max_delay: 60s
+      heartbeat_interval: 15s
+      heartbeat_timeout: 10s
+
+    inference:
+      max_tokens: 4096
+      temperature: 0.15
+      top_p: 0.9
+      stream: true
+
+    filesystem:
+      allowed_paths:
+        - /workspace/openspec
+      read: true
+      write: true                   # must write security-result.json
+
+    shell:
+      allowed_commands:
+        - openspec
+      deny_patterns:
+        - "rm -rf"
+        - "sudo"
+
+    resources:
+      max_concurrent_sessions: 2
+      max_prompt_length: 16384
+
+# ─────────────────────────────────────────────────────────────
+# SESSIONS
+# ─────────────────────────────────────────────────────────────
+sessions:
+  # Root directory for all persisted session state.
+  storage: /workspace/sessions
+
+  # If true, when a pod restarts the orchestrator automatically resumes
+  # any in-progress workflow from the last saved step.
+  resume_on_restart: true
+
+  # Sessions are keyed by feature name for persistence across pod restarts.
+  naming_pattern: "{agent}-{feature}"
+
+  # Session state is checkpointed after every step completion.
+  checkpoint_strategy: after_step
+
+  # Sessions are kept for 7 days after the workflow completes, then pruned.
+  retention_days: 7
+
+  # If a session cannot be found on resume, create a fresh one and replay
+  # from the last known-good checkpoint.
+  on_missing_session:
+    action: recreate_and_replay
+    replay_from: last_checkpoint
+
+  # Serialisation format for session state files.
+  state_format: json
+
+  # Per-session encryption at rest (uses the cluster secret manager).
+  encryption:
+    enabled: true
+    key_ref: secret/pispec/session-encryption-key
+
+# ─────────────────────────────────────────────────────────────
+# ORCHESTRATOR
+# ─────────────────────────────────────────────────────────────
+orchestrator:
+  # Run eligible parallel steps concurrently.
+  parallel_execution: true
+
+  # Maximum number of agent calls running concurrently across all workflows.
+  max_parallel_agents: 6
+
+  # Queue incoming prompts rather than dropping them when the agent is busy.
+  prompt_queueing: true
+
+  # Maximum number of prompts queued per agent session.
+  prompt_queue_max_depth: 50
+
+  # Use cooperative cancellation: send a stop signal and wait for the agent
+  # to finish its current token before aborting. Avoids corrupt partial writes.
+  cooperative_cancel: true
+
+  # Grace period after sending cooperative cancel before forced kill.
+  cooperative_cancel_grace_period: 15s
+
+  # Maximum time to wait at human-gate step (24 hours in seconds).
+  human_gate_timeout: 86400
+
+  # Global default timeout for any step that does not specify its own.
+  default_step_timeout: 30m
+
+  # Global default timeout for the entire workflow.
+  default_workflow_timeout: 72h
+
+  # Retry configuration for network failures and transient agent errors.
+  retry:
+    max_attempts: 4
+    backoff: exponential
+    initial_delay: 2s
+    max_delay: 120s
+    retryable_errors:
+      - CONNECTION_REFUSED
+      - AGENT_UNAVAILABLE
+      - TIMEOUT
+      - 503
+      - 429
+
+  # Log level for the orchestrator daemon.
+  log_level: info
+
+  # Emit structured JSON logs for ingestion by the cluster log aggregator.
+  log_format: json
+
+  # Metrics endpoint scraped by Prometheus.
+  metrics:
+    enabled: true
+    port: 9090
+    path: /metrics
+    labels:
+      app: pispec-orchestrator
+      component: acpx
+
+  # Trace every step transition for debugging.
+  tracing:
+    enabled: true
+    exporter: otlp
+    endpoint: http://otel-collector.monitoring.svc.cluster.local:4317
+    service_name: pispec-orchestrator
+
+  # Health check endpoint used by Kubernetes liveness/readiness probes.
+  health:
+    port: 8080
+    liveness_path: /healthz
+    readiness_path: /readyz
+
+# ─────────────────────────────────────────────────────────────
+# WORKSPACE
+# ─────────────────────────────────────────────────────────────
+workspace:
+  root: /workspace
+  openspec_changes: /workspace/openspec/changes
+  sessions: /workspace/sessions
+
+# ─────────────────────────────────────────────────────────────
+# GATE POLLING
+# ─────────────────────────────────────────────────────────────
+gate:
+  # Default polling interval for file-based gate steps (human-gate).
+  default_poll_interval: 60s
+
+  # Jitter added to polling interval to avoid thundering-herd on shared storage.
+  poll_jitter: 10s
+
+  # Maximum number of consecutive poll errors before the gate fails hard.
+  max_poll_errors: 10
+
+# ─────────────────────────────────────────────────────────────
+# SECURITY
+# ─────────────────────────────────────────────────────────────
+security:
+  # Validate agent JWT tokens issued by the pi-platform auth service.
+  agent_auth:
+    enabled: true
+    jwks_url: https://auth.pi-platform.internal/.well-known/jwks.json
+    required_audience: acpx-orchestrator
+
+  # TLS for all agent WebSocket connections.
+  tls:
+    enabled: true
+    verify_server_cert: true
+    ca_cert_path: /etc/ssl/certs/pi-platform-ca.crt
+
+  # Audit log: record every step start, completion, and failure.
+  audit_log:
+    enabled: true
+    sink: /workspace/sessions/audit.jsonl
+    include_prompts: false          # do not log raw prompt text in audit trail

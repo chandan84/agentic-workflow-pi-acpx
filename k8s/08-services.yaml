@@ -1,0 +1,76 @@
+---
+# ClusterIP Services for all three PiSpec Flow agents
+# These services provide stable cluster-internal DNS names for WebSocket JSON-RPC 2.0 connections.
+# External access should be routed through an Ingress or API Gateway, not directly to these services.
+
+# ── Planner Service ────────────────────────────────────────────────────────────
+# DNS: pi-planner.pi-agents.svc.cluster.local:8787
+apiVersion: v1
+kind: Service
+metadata:
+  name: pi-planner
+  namespace: pi-agents
+  labels:
+    app: pi-planner
+    app.kubernetes.io/name: pi-planner
+    app.kubernetes.io/part-of: pispec-flow
+    app.kubernetes.io/component: service
+  annotations:
+    description: "ClusterIP service for planner agent WebSocket JSON-RPC 2.0 (port 8787)"
+spec:
+  type: ClusterIP
+  selector:
+    app: pi-planner
+  ports:
+    - name: ws-rpc
+      port: 8787
+      targetPort: ws-rpc
+      protocol: TCP
+---
+# ── Reviewer Service ───────────────────────────────────────────────────────────
+# DNS: pi-reviewer.pi-agents.svc.cluster.local:8788
+apiVersion: v1
+kind: Service
+metadata:
+  name: pi-reviewer
+  namespace: pi-agents
+  labels:
+    app: pi-reviewer
+    app.kubernetes.io/name: pi-reviewer
+    app.kubernetes.io/part-of: pispec-flow
+    app.kubernetes.io/component: service
+  annotations:
+    description: "ClusterIP service for reviewer agent WebSocket JSON-RPC 2.0 (port 8788)"
+spec:
+  type: ClusterIP
+  selector:
+    app: pi-reviewer
+  ports:
+    - name: ws-rpc
+      port: 8788
+      targetPort: ws-rpc
+      protocol: TCP
+---
+# ── Security Service ───────────────────────────────────────────────────────────
+# DNS: pi-security.pi-agents.svc.cluster.local:8789
+apiVersion: v1
+kind: Service
+metadata:
+  name: pi-security
+  namespace: pi-agents
+  labels:
+    app: pi-security
+    app.kubernetes.io/name: pi-security
+    app.kubernetes.io/part-of: pispec-flow
+    app.kubernetes.io/component: service
+  annotations:
+    description: "ClusterIP service for security agent WebSocket JSON-RPC 2.0 (port 8789)"
+spec:
+  type: ClusterIP
+  selector:
+    app: pi-security
+  ports:
+    - name: ws-rpc
+      port: 8789
+      targetPort: ws-rpc
+      protocol: TCP

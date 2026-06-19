@@ -1,0 +1,198 @@
+---
+# Planner Agent Deployment
+# Model: claude-opus-4-7  |  Port: 8787  |  Role: Spec planning and decomposition
+# pi runs in --rpc mode; pi-acp wraps it with WebSocket JSON-RPC 2.0 transport
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pi-planner
+  namespace: pi-agents
+  labels:
+    app: pi-planner
+    app.kubernetes.io/name: pi-planner
+    app.kubernetes.io/part-of: pispec-flow
+    app.kubernetes.io/component: agent
+    app.kubernetes.io/version: "1.0.0"
+  annotations:
+    description: "Planner agent — claude-opus-4-7, port 8787"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pi-planner
+  strategy:
+    type: Recreate          # Single replica with shared EFS write mount — avoid split-brain
+  template:
+    metadata:
+      labels:
+        app: pi-planner
+        app.kubernetes.io/name: pi-planner
+        app.kubernetes.io/part-of: pispec-flow
+        app.kubernetes.io/component: agent
+    spec:
+      serviceAccountName: pispec-sa
+
+      # ── Init Containers ────────────────────────────────────────────────────
+      initContainers:
+        - name: git-credential-setup
+          image: alpine/git:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -euo pipefail
+              echo "Configuring git credentials for planner agent..."
+
+              # Write netrc-style credential store using the GitHub PAT
+              echo "https://x-access-token:${GITHUB_PAT}@github.com" \
+                > /root/.git-credentials
+              chmod 600 /root/.git-credentials
+
+              # Configure git to use the credential store
+              git config --global credential.helper store
+              git config --global user.email "pi-planner@pispec-flow.local"
+              git config --global user.name "PI Planner Agent"
+
+              # Disable SSL verification only if needed for self-signed certs
+              # git config --global http.sslVerify false
+
+              echo "Git credentials configured successfully."
+          env:
+            - name: GITHUB_PAT
+              valueFrom:
+                secretKeyRef:
+                  name: github-pat-planner
+                  key: GITHUB_PAT
+          volumeMounts:
+            - name: root-home
+              mountPath: /root
+
+      # ── Main Container ─────────────────────────────────────────────────────
+      containers:
+        - name: pi-planner
+          image: node:20-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -euo pipefail
+              echo "Installing PiSpec Flow dependencies..."
+
+              # Install system dependencies
+              apk add --no-cache git curl bash
+
+              # Install GitHub CLI (gh)
+              apk add --no-cache github-cli || \
+                (curl -fsSL https://github.com/cli/cli/releases/download/v2.50.0/gh_2.50.0_linux_amd64.tar.gz \
+                  | tar -xz -C /usr/local --strip-components=1)
+
+              # Install PI agent toolchain via npm
+              npm install -g \
+                pi-coding-agent \
+                @fission-ai/openspec \
+                pi-acp
+
+              echo "Dependencies installed. Starting planner agent..."
+              echo "  Model  : ${AGENT_MODEL}"
+              echo "  Port   : ${AGENT_PORT}"
+              echo "  Mode   : ${PI_MODE}"
+
+              # Launch pi in RPC mode, wrapped by pi-acp for WebSocket JSON-RPC 2.0
+              exec pi-acp \
+                --agent pi \
+                --pi-args "--rpc --model ${AGENT_MODEL}" \
+                --port "${AGENT_PORT}" \
+                --workspace /workspace
+          env:
+            # GitHub authentication — both GITHUB_TOKEN (gh CLI) and GH_TOKEN
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-pat-planner
+                  key: GITHUB_PAT
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-pat-planner
+                  key: GITHUB_PAT
+            # Anthropic API key for claude-opus-4-7
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: anthropic-api-key
+                  key: ANTHROPIC_API_KEY
+            # Agent identity
+            - name: AGENT_MODEL
+              value: "claude-opus-4-7"
+            - name: AGENT_PORT
+              value: "8787"
+            - name: PI_MODE
+              value: "rpc"
+            - name: AGENT_NAME
+              value: "planner"
+            # Node environment
+            - name: NODE_ENV
+              value: "production"
+          ports:
+            - name: ws-rpc
+              containerPort: 8787
+              protocol: TCP
+
+          # ── Volume Mounts ──────────────────────────────────────────────────
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: root-home
+              mountPath: /root        # Shares git credentials written by initContainer
+
+          # ── Resource Limits ────────────────────────────────────────────────
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+
+          # ── Health Probes ──────────────────────────────────────────────────
+          # Allow 120s startup time for npm install + agent bootstrap
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8787
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 12     # 60 + 12*10 = 180s total startup budget
+            successThreshold: 1
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8787
+            initialDelaySeconds: 0   # startupProbe gates this
+            periodSeconds: 30
+            failureThreshold: 3
+            timeoutSeconds: 5
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8787
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+
+      # ── Volumes ────────────────────────────────────────────────────────────
+      volumes:
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: pispec-efs-pvc
+        - name: root-home
+          emptyDir: {}              # Scoped to pod lifetime; holds git credentials
+
+      # ── Scheduling ────────────────────────────────────────────────────────
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

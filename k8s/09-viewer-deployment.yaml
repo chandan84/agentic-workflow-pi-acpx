@@ -1,0 +1,233 @@
+---
+# Nginx ConfigMap — serves the /specs directory from EFS as a browseable directory listing
+# Mounted read-only so the viewer can never modify spec artifacts
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: specs-viewer-nginx-conf
+  namespace: pi-agents
+  labels:
+    app: specs-viewer
+    app.kubernetes.io/name: specs-viewer
+    app.kubernetes.io/part-of: pispec-flow
+    app.kubernetes.io/component: config
+  annotations:
+    description: "Nginx configuration for the specs-viewer read-only EFS mount"
+data:
+  nginx.conf: |
+    # Nginx configuration for PiSpec Flow specs viewer
+    # Serves read-only spec artifacts from the shared EFS volume at /specs
+    user  nginx;
+    worker_processes  auto;
+
+    error_log  /var/log/nginx/error.log warn;
+    pid        /var/run/nginx.pid;
+
+    events {
+        worker_connections  1024;
+    }
+
+    http {
+        include       /etc/nginx/mime.types;
+        default_type  application/octet-stream;
+
+        log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                          '$status $body_bytes_sent "$http_referer" '
+                          '"$http_user_agent"';
+
+        access_log  /var/log/nginx/access.log  main;
+
+        sendfile        on;
+        keepalive_timeout  65;
+
+        # Gzip for text-based spec formats (YAML, JSON, Markdown)
+        gzip on;
+        gzip_types text/plain text/css application/json application/yaml
+                   text/markdown text/x-markdown;
+
+        server {
+            listen       80;
+            server_name  _;
+
+            # Health check endpoint — used by readinessProbe
+            location /health {
+                access_log off;
+                return 200 "ok\n";
+                add_header Content-Type text/plain;
+            }
+
+            # Serve spec files from EFS read-only mount
+            location / {
+                root   /specs;
+                index  index.html index.htm;
+
+                # Enable directory listing for browsing spec artifacts
+                autoindex on;
+                autoindex_exact_size off;    # Show human-readable sizes
+                autoindex_localtime  on;     # Use server local time
+
+                # Security headers
+                add_header X-Frame-Options "SAMEORIGIN";
+                add_header X-Content-Type-Options "nosniff";
+                add_header X-XSS-Protection "1; mode=block";
+                add_header Cache-Control "no-store, no-cache, must-revalidate";
+
+                # Allow CORS for API consumers (restrict origin in production)
+                add_header Access-Control-Allow-Origin "*";
+                add_header Access-Control-Allow-Methods "GET, OPTIONS";
+            }
+
+            # Deny access to hidden files (e.g., .git, .env)
+            location ~ /\. {
+                deny all;
+                access_log off;
+                log_not_found off;
+            }
+
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+                root   /usr/share/nginx/html;
+            }
+        }
+    }
+---
+# Specs Viewer Deployment
+# Serves spec artifacts from the shared EFS PVC via nginx
+# Mount is read-only — this pod cannot modify agent-written artifacts
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: specs-viewer
+  namespace: pi-agents
+  labels:
+    app: specs-viewer
+    app.kubernetes.io/name: specs-viewer
+    app.kubernetes.io/part-of: pispec-flow
+    app.kubernetes.io/component: viewer
+    app.kubernetes.io/version: "1.0.0"
+  annotations:
+    description: "Nginx-based read-only viewer for PiSpec Flow spec artifacts"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: specs-viewer
+  strategy:
+    type: RollingUpdate           # Read-only mount — safe for rolling updates
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: specs-viewer
+        app.kubernetes.io/name: specs-viewer
+        app.kubernetes.io/part-of: pispec-flow
+        app.kubernetes.io/component: viewer
+    spec:
+      serviceAccountName: pispec-sa
+
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+
+          # ── Volume Mounts ────────────────────────────────────────────────
+          volumeMounts:
+            # Read-only mount of EFS at /specs — viewer cannot modify spec artifacts
+            - name: specs
+              mountPath: /specs
+              readOnly: true
+            # Custom nginx configuration
+            - name: nginx-conf
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+
+          # ── Resource Limits ──────────────────────────────────────────────
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+
+          # ── Health Probes ────────────────────────────────────────────────
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            failureThreshold: 3
+            timeoutSeconds: 5
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+
+          # ── Security Context ─────────────────────────────────────────────
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false    # nginx writes to /var/cache/nginx and /var/run
+            runAsNonRoot: false              # nginx requires root to bind port 80
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE            # Allow binding to port 80
+
+      # ── Volumes ────────────────────────────────────────────────────────────
+      volumes:
+        - name: specs
+          persistentVolumeClaim:
+            claimName: pispec-efs-pvc
+            # readOnly: true is set on the volumeMount, not here, so the PVC
+            # itself remains writable for agent pods
+        - name: nginx-conf
+          configMap:
+            name: specs-viewer-nginx-conf
+            items:
+              - key: nginx.conf
+                path: nginx.conf
+
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 10
+---
+# Specs Viewer Service
+# ClusterIP — expose externally via Ingress or kubectl port-forward for browsing
+# DNS: specs-viewer.pi-agents.svc.cluster.local:80
+apiVersion: v1
+kind: Service
+metadata:
+  name: specs-viewer
+  namespace: pi-agents
+  labels:
+    app: specs-viewer
+    app.kubernetes.io/name: specs-viewer
+    app.kubernetes.io/part-of: pispec-flow
+    app.kubernetes.io/component: service
+  annotations:
+    description: "ClusterIP service for the nginx specs viewer (port 80)"
+    # To browse specs locally:
+    # kubectl port-forward svc/specs-viewer 8080:80 -n pi-agents
+    # then open http://localhost:8080
+spec:
+  type: ClusterIP
+  selector:
+    app: specs-viewer
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP

@@ -1,0 +1,123 @@
+---
+# pi-agent-config — central configuration for all three PI agents
+# Referenced by deployments to inject agent identity and routing metadata
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pi-agent-config
+  namespace: pi-agents
+  labels:
+    app.kubernetes.io/part-of: pispec-flow
+    app.kubernetes.io/component: config
+  annotations:
+    description: "Agent configuration for all three PiSpec Flow agents"
+data:
+  # Individual agent configuration blocks (also available as structured JSON below)
+  planner.json: |
+    {
+      "name": "planner",
+      "endpoint": "ws://pi-planner.pi-agents.svc.cluster.local:8787",
+      "model": "claude-opus-4-7",
+      "port": 8787,
+      "mode": "rpc",
+      "description": "Spec planning and decomposition agent"
+    }
+
+  reviewer.json: |
+    {
+      "name": "reviewer",
+      "endpoint": "ws://pi-reviewer.pi-agents.svc.cluster.local:8788",
+      "model": "gpt-5.5",
+      "port": 8788,
+      "mode": "rpc",
+      "description": "Spec review and quality assurance agent"
+    }
+
+  security.json: |
+    {
+      "name": "security",
+      "endpoint": "ws://pi-security.pi-agents.svc.cluster.local:8789",
+      "model": "claude-sonnet-4-6",
+      "port": 8789,
+      "mode": "rpc",
+      "description": "Security review and compliance agent"
+    }
+
+  # Consolidated agent registry — all agents in one JSON array
+  agents.json: |
+    [
+      {
+        "name": "planner",
+        "endpoint": "ws://pi-planner.pi-agents.svc.cluster.local:8787",
+        "model": "claude-opus-4-7",
+        "port": 8787,
+        "mode": "rpc"
+      },
+      {
+        "name": "reviewer",
+        "endpoint": "ws://pi-reviewer.pi-agents.svc.cluster.local:8788",
+        "model": "gpt-5.5",
+        "port": 8788,
+        "mode": "rpc"
+      },
+      {
+        "name": "security",
+        "endpoint": "ws://pi-security.pi-agents.svc.cluster.local:8789",
+        "model": "claude-sonnet-4-6",
+        "port": 8789,
+        "mode": "rpc"
+      }
+    ]
+---
+# acpx-config — pi-acp (ACP eXtended) configuration
+# pi-acp wraps each pi agent in WebSocket JSON-RPC 2.0 transport
+# Each agent connects to its peer agents via the cluster-local DNS endpoints below
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: acpx-config
+  namespace: pi-agents
+  labels:
+    app.kubernetes.io/part-of: pispec-flow
+    app.kubernetes.io/component: config
+  annotations:
+    description: "pi-acp WebSocket JSON-RPC 2.0 transport configuration"
+data:
+  acpx.yaml: |
+    # pi-acp configuration — WebSocket JSON-RPC 2.0 transport layer
+    # Loaded by pi-acp at startup inside each agent container
+    transport:
+      protocol: ws
+      rpc_version: "2.0"
+
+    agents:
+      planner:
+        endpoint: ws://pi-planner.pi-agents.svc.cluster.local:8787
+        model: claude-opus-4-7
+        port: 8787
+        health_path: /health
+        timeout_ms: 30000
+
+      reviewer:
+        endpoint: ws://pi-reviewer.pi-agents.svc.cluster.local:8788
+        model: gpt-5.5
+        port: 8788
+        health_path: /health
+        timeout_ms: 30000
+
+      security:
+        endpoint: ws://pi-security.pi-agents.svc.cluster.local:8789
+        model: claude-sonnet-4-6
+        port: 8789
+        health_path: /health
+        timeout_ms: 30000
+
+    workspace:
+      # Shared EFS mount — all agents read/write here
+      path: /workspace
+      specs_path: /workspace/specs
+      artifacts_path: /workspace/artifacts
+
+    logging:
+      level: info
+      format: json

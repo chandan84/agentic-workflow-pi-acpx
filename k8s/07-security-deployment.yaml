@@ -1,0 +1,187 @@
+---
+# Security Agent Deployment
+# Model: claude-sonnet-4-6  |  Port: 8789  |  Role: Security review and compliance
+# pi runs in --rpc mode; pi-acp wraps it with WebSocket JSON-RPC 2.0 transport
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pi-security
+  namespace: pi-agents
+  labels:
+    app: pi-security
+    app.kubernetes.io/name: pi-security
+    app.kubernetes.io/part-of: pispec-flow
+    app.kubernetes.io/component: agent
+    app.kubernetes.io/version: "1.0.0"
+  annotations:
+    description: "Security agent — claude-sonnet-4-6, port 8789"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pi-security
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: pi-security
+        app.kubernetes.io/name: pi-security
+        app.kubernetes.io/part-of: pispec-flow
+        app.kubernetes.io/component: agent
+    spec:
+      serviceAccountName: pispec-sa
+
+      # ── Init Containers ────────────────────────────────────────────────────
+      initContainers:
+        - name: git-credential-setup
+          image: alpine/git:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -euo pipefail
+              echo "Configuring git credentials for security agent..."
+
+              echo "https://x-access-token:${GITHUB_PAT}@github.com" \
+                > /root/.git-credentials
+              chmod 600 /root/.git-credentials
+
+              git config --global credential.helper store
+              git config --global user.email "pi-security@pispec-flow.local"
+              git config --global user.name "PI Security Agent"
+
+              echo "Git credentials configured successfully."
+          env:
+            - name: GITHUB_PAT
+              valueFrom:
+                secretKeyRef:
+                  name: github-pat-security
+                  key: GITHUB_PAT
+          volumeMounts:
+            - name: root-home
+              mountPath: /root
+
+      # ── Main Container ─────────────────────────────────────────────────────
+      containers:
+        - name: pi-security
+          image: node:20-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -euo pipefail
+              echo "Installing PiSpec Flow dependencies..."
+
+              apk add --no-cache git curl bash
+
+              # Install GitHub CLI
+              apk add --no-cache github-cli || \
+                (curl -fsSL https://github.com/cli/cli/releases/download/v2.50.0/gh_2.50.0_linux_amd64.tar.gz \
+                  | tar -xz -C /usr/local --strip-components=1)
+
+              npm install -g \
+                pi-coding-agent \
+                @fission-ai/openspec \
+                pi-acp
+
+              echo "Dependencies installed. Starting security agent..."
+              echo "  Model  : ${AGENT_MODEL}"
+              echo "  Port   : ${AGENT_PORT}"
+              echo "  Mode   : ${PI_MODE}"
+
+              exec pi-acp \
+                --agent pi \
+                --pi-args "--rpc --model ${AGENT_MODEL}" \
+                --port "${AGENT_PORT}" \
+                --workspace /workspace
+          env:
+            # GitHub authentication
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-pat-security
+                  key: GITHUB_PAT
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-pat-security
+                  key: GITHUB_PAT
+            # Anthropic API key for claude-sonnet-4-6
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: anthropic-api-key
+                  key: ANTHROPIC_API_KEY
+            # Agent identity
+            - name: AGENT_MODEL
+              value: "claude-sonnet-4-6"
+            - name: AGENT_PORT
+              value: "8789"
+            - name: PI_MODE
+              value: "rpc"
+            - name: AGENT_NAME
+              value: "security"
+            - name: NODE_ENV
+              value: "production"
+          ports:
+            - name: ws-rpc
+              containerPort: 8789
+              protocol: TCP
+
+          # ── Volume Mounts ──────────────────────────────────────────────────
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: root-home
+              mountPath: /root
+
+          # ── Resource Limits ────────────────────────────────────────────────
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+
+          # ── Health Probes ──────────────────────────────────────────────────
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8789
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 12
+            successThreshold: 1
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8789
+            initialDelaySeconds: 0
+            periodSeconds: 30
+            failureThreshold: 3
+            timeoutSeconds: 5
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8789
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+
+      # ── Volumes ────────────────────────────────────────────────────────────
+      volumes:
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: pispec-efs-pvc
+        - name: root-home
+          emptyDir: {}
+
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

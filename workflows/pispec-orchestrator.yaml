@@ -1,0 +1,605 @@
+# PiSpec Flow — acpx Orchestrator Workflow
+# Drives an OpenSpec change from raw idea to archived, reviewed specification.
+#
+# Steps:
+#   1. propose      — planner creates the initial OpenSpec change
+#   2. grill        — planner runs openspec-grill skill interactively (5 Qs at a time)
+#   3. diagrams     — planner enriches spec.md with Mermaid diagrams
+#   4. human-gate   — pause and poll for human approval (24 h timeout)
+#   5. review       — parallel: openspec verify-change + openspec explore-security
+#   6. decide       — route: approved + both reviews pass → archive; else → grill
+#
+# Config reference: acpx-config.yaml (co-located in this directory)
+
+version: "1.0"
+
+metadata:
+  name: pispec-orchestrator
+  description: >
+    End-to-end PiSpec Flow — from raw change proposal through interactive
+    grilling, diagram generation, human approval gate, parallel review, and
+    conditional archival.
+  owner: pi-platform-team
+  tags:
+    - openspec
+    - spec-flow
+    - acpx
+
+# ─────────────────────────────────────────────────────────────
+# GLOBAL INPUTS
+# ─────────────────────────────────────────────────────────────
+inputs:
+  change_id:
+    type: string
+    required: true
+    description: >
+      Unique identifier for the OpenSpec change being driven through the
+      workflow. Passed as an environment variable or CLI flag:
+        acpx run pispec-orchestrator --input change_id=CHANGE-042
+  workspace:
+    type: string
+    required: false
+    default: /workspace
+    description: Root path containing the openspec directory tree.
+  viewer_base_url:
+    type: string
+    required: false
+    default: https://pispec.internal/viewer
+    description: Base URL for the human-readable spec viewer presented at the human-gate step.
+
+# ─────────────────────────────────────────────────────────────
+# AGENTS — resolved from acpx-config.yaml at runtime
+# ─────────────────────────────────────────────────────────────
+agents:
+  planner:
+    config_ref: agents.planner        # resolved from acpx-config.yaml
+    description: Primary spec author. Creates, grills, and enriches the OpenSpec change.
+    capabilities:
+      - filesystem_read
+      - filesystem_write
+      - interactive_prompts          # required for openspec-grill interactive mode
+      - openspec_cli                 # access to openspec binary
+    env:
+      CHANGE_DIR: "{{workspace}}/openspec/changes/{{change_id}}"
+      OPENSPEC_WORKSPACE: "{{workspace}}/openspec"
+
+  reviewer:
+    config_ref: agents.reviewer
+    description: Structural and semantic reviewer of the completed spec.
+    capabilities:
+      - filesystem_read
+      - openspec_cli
+    env:
+      CHANGE_DIR: "{{workspace}}/openspec/changes/{{change_id}}"
+
+  security:
+    config_ref: agents.security
+    description: Security and threat-model reviewer of the completed spec.
+    capabilities:
+      - filesystem_read
+      - openspec_cli
+    env:
+      CHANGE_DIR: "{{workspace}}/openspec/changes/{{change_id}}"
+
+# ─────────────────────────────────────────────────────────────
+# SESSIONS — named, persistent, one per feature
+# ─────────────────────────────────────────────────────────────
+sessions:
+  config_ref: sessions                # resolved from acpx-config.yaml
+  named:
+    planner-session:
+      agent: planner
+      id_template: "pispec-planner-{{change_id}}"
+      description: >
+        Persistent planner session for the lifetime of this change.
+        Resumes automatically if the pod restarts.
+    reviewer-session:
+      agent: reviewer
+      id_template: "pispec-reviewer-{{change_id}}"
+      description: Persistent reviewer session; stateless between invocations.
+    security-session:
+      agent: security
+      id_template: "pispec-security-{{change_id}}"
+      description: Persistent security session; stateless between invocations.
+
+# ─────────────────────────────────────────────────────────────
+# SHARED STATE — persisted across restarts
+# ─────────────────────────────────────────────────────────────
+state:
+  storage: "{{workspace}}/sessions/pispec-{{change_id}}-state.json"
+  keys:
+    current_step: string
+    loop_count: integer
+    review_result: object            # {verify: pass|fail, security: pass|fail}
+    human_approved: boolean
+    grill_round: integer             # tracks which grill round we are on after loops
+
+# ─────────────────────────────────────────────────────────────
+# STEPS
+# ─────────────────────────────────────────────────────────────
+steps:
+
+  # ───────────────────────────────────────────────────────────
+  # STEP 1 — propose
+  # ───────────────────────────────────────────────────────────
+  - id: propose
+    name: "Create OpenSpec Change"
+    agent: planner
+    session: planner-session
+    description: >
+      The planner invokes `openspec new-change` to scaffold the initial
+      proposal directory and stub files, then opens proposal.md and writes
+      a first-pass requirement description.
+    on_restart: skip_if_done         # idempotent: if change dir exists, skip
+    prompt: |
+      You are the spec planner for PiSpec Flow.
+
+      Run the following command to scaffold a new OpenSpec change:
+
+        openspec new-change {{change_id}}
+
+      This will create:
+        {{workspace}}/openspec/changes/{{change_id}}/
+          proposal.md      — the main requirement document (stub)
+          spec.md          — the detailed specification (empty)
+          grill-answers.md — populated later by openspec-grill
+
+      After the command succeeds, open proposal.md and write a structured
+      first-pass proposal that includes at minimum:
+        - ## Summary      (1–3 sentence TL;DR)
+        - ## Motivation   (why this change, what problem it solves)
+        - ## Scope        (what is in / out of scope for this change)
+        - ## Stakeholders (who is affected)
+        - ## Open Questions (anything you are unsure about — leave placeholders)
+
+      Do not guess at answers to open questions. Leave them explicit.
+      When done, print: PROPOSE_DONE
+    success_signal: "PROPOSE_DONE"
+    timeout: 10m
+    on_failure:
+      action: halt
+      message: "Step 'propose' failed. Check planner session logs."
+
+  # ───────────────────────────────────────────────────────────
+  # STEP 2 — grill
+  # ───────────────────────────────────────────────────────────
+  - id: grill
+    name: "Interactive Requirement Grilling"
+    agent: planner
+    session: planner-session
+    description: >
+      The planner runs the openspec-grill skill interactively. The skill
+      asks up to 15 questions across up to 3 rounds of 5, waiting for human
+      answers between each question. Answers are saved to grill-answers.md
+      and a Clarifications section is appended to proposal.md.
+    mode: interactive                # acpx interactive mode: yield to human input
+    on_restart: resume               # resume from last answered question
+    state_updates:
+      - key: grill_round
+        value: "{{skill.round}}"
+    prompt: |
+      You are the spec planner for PiSpec Flow.
+
+      Run the openspec-grill skill for this change:
+
+        Skill: openspec-grill
+        Inputs:
+          change_id: {{change_id}}
+          workspace: {{workspace}}
+
+      Follow the skill instructions exactly. Ask one question at a time.
+      Wait for the human to respond before proceeding to the next question.
+
+      The skill will:
+        1. Read proposal.md
+        2. Ask up to 15 clarifying questions (5 per round, up to 3 rounds)
+        3. Save all answers to {{workspace}}/openspec/changes/{{change_id}}/grill-answers.md
+        4. Append a ## Clarifications section to proposal.md
+        5. Stop early if information gain drops below 20%
+
+      When the skill signals completion, print: GRILL_DONE
+    success_signal: "GRILL_DONE"
+    timeout: 4h                      # ample time for async human answers
+    on_timeout:
+      action: continue               # treat timeout as session complete; move on
+      message: "Grill timed out after 4 h. Continuing with answers collected so far."
+    on_failure:
+      action: halt
+      message: "Step 'grill' failed. Inspect planner session logs."
+
+  # ───────────────────────────────────────────────────────────
+  # STEP 3 — diagrams
+  # ───────────────────────────────────────────────────────────
+  - id: diagrams
+    name: "Generate Mermaid Diagrams"
+    agent: planner
+    session: planner-session
+    description: >
+      The planner reads proposal.md and grill-answers.md, then populates
+      spec.md with three Mermaid diagrams: architecture overview, sequence
+      diagram for the primary flow, and ER diagram for data model changes.
+    on_restart: skip_if_done
+    prompt: |
+      You are the spec planner for PiSpec Flow.
+
+      Read the following files:
+        - {{workspace}}/openspec/changes/{{change_id}}/proposal.md
+        - {{workspace}}/openspec/changes/{{change_id}}/grill-answers.md
+
+      Then open {{workspace}}/openspec/changes/{{change_id}}/spec.md and
+      write the complete detailed specification. It must include:
+
+      ## Architecture Diagram
+
+      A Mermaid `graph TD` or `graph LR` diagram showing:
+        - All system components involved in this change
+        - Data flow direction between components
+        - External dependencies (dashed borders)
+        - New components introduced by this change (highlighted with a note)
+
+      ```mermaid
+      graph TD
+          %% Replace with actual components for {{change_id}}
+          Client --> API
+          API --> ServiceLayer
+          ServiceLayer --> DB[(Database)]
+          ServiceLayer --> ExternalDep[[External Service]]
+      ```
+
+      ## Sequence Diagram
+
+      A Mermaid `sequenceDiagram` showing the primary happy-path flow:
+        - All actors (users, services, external systems)
+        - Synchronous calls (solid arrows)
+        - Asynchronous events (dashed arrows)
+        - Key error/branch paths as `alt` blocks
+
+      ```mermaid
+      sequenceDiagram
+          %% Replace with actual sequence for {{change_id}}
+          actor User
+          participant API
+          participant Service
+          participant DB
+          User->>API: Request
+          API->>Service: Process
+          Service->>DB: Write
+          DB-->>Service: Ack
+          Service-->>API: Result
+          API-->>User: Response
+      ```
+
+      ## Entity-Relationship Diagram
+
+      A Mermaid `erDiagram` showing:
+        - All entities added or modified by this change
+        - Relationships and cardinality
+        - Key fields (PK, FK, important attributes)
+        - Notation: new entities marked with `[NEW]` in their name comment
+
+      ```mermaid
+      erDiagram
+          %% Replace with actual ER model for {{change_id}}
+          ENTITY_A {
+              uuid id PK
+              string name
+          }
+          ENTITY_B {
+              uuid id PK
+              uuid entity_a_id FK
+          }
+          ENTITY_A ||--o{ ENTITY_B : "has"
+      ```
+
+      After the diagrams, include these additional sections in spec.md:
+
+      ## Detailed Requirements
+      (Numbered list of functional requirements derived from proposal.md
+       and grill-answers.md)
+
+      ## Non-Functional Requirements
+      (Performance, security, observability, reliability targets)
+
+      ## Acceptance Criteria
+      (Bullet list of testable pass/fail criteria)
+
+      ## Open Questions
+      (Any questions that remain unanswered after grilling)
+
+      Base ALL content on what was written in proposal.md and
+      grill-answers.md. Do not invent facts. Use [TBD] where genuinely
+      unknown. When done, print: DIAGRAMS_DONE
+    success_signal: "DIAGRAMS_DONE"
+    timeout: 20m
+    on_failure:
+      action: halt
+      message: "Step 'diagrams' failed. Inspect planner session logs."
+
+  # ───────────────────────────────────────────────────────────
+  # STEP 4 — human-gate
+  # ───────────────────────────────────────────────────────────
+  - id: human-gate
+    name: "Human Approval Gate"
+    description: >
+      Pause the workflow and notify a human reviewer. Poll for the approval
+      file. Timeout after 24 hours and mark as rejected if no response.
+    type: gate                       # acpx gate step: no agent prompt, pure polling
+    on_restart: resume               # do not reset the 24 h clock on restart
+    state_updates:
+      - key: human_approved
+        value: "{{gate.approved}}"
+    gate:
+      # What to tell the human
+      notification:
+        channel: stdout              # also supports: slack, email, webhook
+        message: |
+          ╔══════════════════════════════════════════════════════════╗
+          ║  PiSpec Flow — Human Approval Required                   ║
+          ╠══════════════════════════════════════════════════════════╣
+          ║  Change   : {{change_id}}                                ║
+          ║  Spec URL : {{viewer_base_url}}/{{change_id}}            ║
+          ╠══════════════════════════════════════════════════════════╣
+          ║  To APPROVE: write the file below with approved: true    ║
+          ║  To REJECT : write the file below with approved: false   ║
+          ║                                                          ║
+          ║  {{workspace}}/openspec/changes/{{change_id}}/           ║
+          ║      human-approval.json                                 ║
+          ╠══════════════════════════════════════════════════════════╣
+          ║  Example (approve):                                      ║
+          ║    {                                                      ║
+          ║      "approved": true,                                   ║
+          ║      "reviewer": "alice@example.com",                    ║
+          ║      "notes": "LGTM",                                    ║
+          ║      "timestamp": "2026-06-19T12:00:00Z"                 ║
+          ║    }                                                      ║
+          ╠══════════════════════════════════════════════════════════╣
+          ║  Timeout: 24 hours from now.                             ║
+          ╚══════════════════════════════════════════════════════════╝
+
+      # Polling configuration
+      poll:
+        file: "{{workspace}}/openspec/changes/{{change_id}}/human-approval.json"
+        interval: 60s                # check every 60 seconds
+        field: approved              # JSON field to read for boolean result
+        approved_value: true
+
+      # Timeout behaviour
+      timeout: 24h
+      on_timeout:
+        action: continue             # continue to decide step; human_approved=false
+        state_overrides:
+          human_approved: false
+        message: >
+          Human gate timed out after 24 hours for {{change_id}}.
+          Treating as rejected. Looping back to grill step.
+
+  # ───────────────────────────────────────────────────────────
+  # STEP 5 — review (parallel)
+  # ───────────────────────────────────────────────────────────
+  - id: review
+    name: "Parallel Technical Review"
+    description: >
+      Run structural verification and security review concurrently.
+      Both must pass before archival is possible.
+    type: parallel
+    parallel:
+      fail_fast: false               # collect both results even if one fails
+      steps:
+
+        - id: review-verify
+          name: "Structural Verification"
+          agent: reviewer
+          session: reviewer-session
+          description: >
+            The reviewer runs openspec verify-change to check structural
+            completeness, cross-reference consistency, and required sections.
+          prompt: |
+            You are the spec reviewer for PiSpec Flow.
+
+            Run the following command and capture its output:
+
+              openspec verify-change {{change_id}} \
+                --workspace {{workspace}} \
+                --output {{workspace}}/openspec/changes/{{change_id}}/verify-result.json
+
+            The command checks:
+              - All required sections present in spec.md (Summary, Architecture,
+                Sequence, ER, Requirements, Acceptance Criteria)
+              - Mermaid diagrams are syntactically valid
+              - All entities referenced in diagrams exist in the ER model
+              - No [TBD] placeholders in Acceptance Criteria
+              - grill-answers.md exists and has at least 5 answered questions
+
+            After the command completes:
+              - If verify-result.json contains "status": "pass" → print: VERIFY_PASS
+              - If verify-result.json contains "status": "fail" → print the failure
+                reasons, then print: VERIFY_FAIL
+          success_signal: "VERIFY_PASS"
+          failure_signal: "VERIFY_FAIL"
+          timeout: 15m
+          on_failure:
+            action: record           # record result; do not halt parallel block
+            state_key: review_result.verify
+            state_value: fail
+
+        - id: review-security
+          name: "Security Review"
+          agent: security
+          session: security-session
+          description: >
+            The security agent runs openspec explore-security to assess the
+            threat model, PII exposure, and authentication surface area.
+          prompt: |
+            You are the security reviewer for PiSpec Flow.
+
+            Run the following command and capture its output:
+
+              openspec explore-security {{change_id}} \
+                --workspace {{workspace}} \
+                --output {{workspace}}/openspec/changes/{{change_id}}/security-result.json
+
+            The command performs a STRIDE-based threat model sweep:
+              - Spoofing: are all callers authenticated?
+              - Tampering: are inputs validated and write paths protected?
+              - Repudiation: are audit logs specified?
+              - Information Disclosure: is PII/credential handling documented?
+              - Denial of Service: are rate limits or resource bounds defined?
+              - Elevation of Privilege: does the change expand trust boundaries?
+
+            Review grill-answers.md for any security-related answers and
+            confirm they are reflected in spec.md.
+
+            After the command completes:
+              - If security-result.json contains "status": "pass" → print: SECURITY_PASS
+              - If security-result.json contains "status": "fail" → print the specific
+                STRIDE findings, then print: SECURITY_FAIL
+          success_signal: "SECURITY_PASS"
+          failure_signal: "SECURITY_FAIL"
+          timeout: 15m
+          on_failure:
+            action: record
+            state_key: review_result.security
+            state_value: fail
+
+    # After both parallel steps complete, record results
+    on_complete:
+      state_updates:
+        - key: review_result.verify
+          value: "{{steps.review-verify.status}}"   # pass | fail | timeout
+        - key: review_result.security
+          value: "{{steps.review-security.status}}"
+
+  # ───────────────────────────────────────────────────────────
+  # STEP 6 — decide
+  # ───────────────────────────────────────────────────────────
+  - id: decide
+    name: "Archive or Loop Decision"
+    description: >
+      Check: human approved AND both reviews passed.
+        YES → run openspec archive-change and finish.
+        NO  → increment loop counter, report failures, loop back to grill.
+      Maximum 3 loops before halting with an escalation notice.
+    type: condition
+    on_restart: rerun                # always re-evaluate on restart
+    condition:
+      # All three gates must be true to archive
+      all:
+        - "{{state.human_approved}} == true"
+        - "{{state.review_result.verify}} == pass"
+        - "{{state.review_result.security}} == pass"
+
+      # Branch: approved
+      if_true:
+        - id: decide-archive
+          name: "Archive Change"
+          agent: planner
+          session: planner-session
+          prompt: |
+            All gates passed. Archive the OpenSpec change now:
+
+              openspec archive-change {{change_id}} \
+                --workspace {{workspace}} \
+                --attach {{workspace}}/openspec/changes/{{change_id}}/verify-result.json \
+                --attach {{workspace}}/openspec/changes/{{change_id}}/security-result.json \
+                --attach {{workspace}}/openspec/changes/{{change_id}}/human-approval.json
+
+            After the command succeeds, print a summary:
+
+              ╔══════════════════════════════════════════════════════╗
+              ║  PiSpec Flow — COMPLETE                              ║
+              ╠══════════════════════════════════════════════════════╣
+              ║  Change  : {{change_id}}                             ║
+              ║  Verdict : ARCHIVED                                  ║
+              ║  Spec    : {{viewer_base_url}}/{{change_id}}         ║
+              ╚══════════════════════════════════════════════════════╝
+
+            Then print: ARCHIVE_DONE
+          success_signal: "ARCHIVE_DONE"
+          timeout: 10m
+          on_failure:
+            action: halt
+            message: "Archive command failed for {{change_id}}. Manual intervention required."
+        terminal: true              # workflow ends here on success path
+
+      # Branch: not approved or reviews failed
+      if_false:
+        - id: decide-loop
+          name: "Loop Back to Grill"
+          type: loop_control
+          pre_actions:
+            # Increment the loop counter stored in state
+            - type: increment
+              state_key: loop_count
+
+            # Enforce maximum loop depth
+            - type: assert
+              condition: "{{state.loop_count}} <= 3"
+              on_failure:
+                action: halt
+                message: |
+                  Maximum loop count (3) reached for {{change_id}}.
+                  Escalation required. Manual review needed.
+                  State: {{state | json}}
+
+            # Report what failed so the planner knows what to fix
+            - type: notify
+              channel: stdout
+              message: |
+                ─────────────────────────────────────────────────────
+                Loop {{state.loop_count}} of 3 — returning to grill.
+
+                Failure reasons:
+                  Human approved : {{state.human_approved}}
+                  Verify result  : {{state.review_result.verify}}
+                  Security result: {{state.review_result.security}}
+
+                The planner will re-run openspec-grill to address
+                the issues raised in:
+                  {{workspace}}/openspec/changes/{{change_id}}/verify-result.json
+                  {{workspace}}/openspec/changes/{{change_id}}/security-result.json
+                ─────────────────────────────────────────────────────
+
+            # Reset approval state for the new round
+            - type: state_set
+              key: human_approved
+              value: false
+            - type: state_set
+              key: review_result
+              value: {verify: pending, security: pending}
+
+          # Jump back to grill step
+          goto: grill
+
+# ─────────────────────────────────────────────────────────────
+# ERROR HANDLING — global defaults
+# ─────────────────────────────────────────────────────────────
+error_handling:
+  default_on_agent_disconnect:
+    action: retry
+    max_retries: 3
+    backoff: exponential
+    initial_delay: 5s
+    message: "Agent disconnected. Retrying with session resume..."
+  default_on_timeout:
+    action: halt
+    message: "Step timed out. Check workflow logs for {{change_id}}."
+  default_on_unhandled_error:
+    action: halt
+    message: "Unhandled error in workflow for {{change_id}}. State saved to: {{state.storage}}"
+
+# ─────────────────────────────────────────────────────────────
+# NOTIFICATIONS — lifecycle events
+# ─────────────────────────────────────────────────────────────
+notifications:
+  on_start:
+    channel: stdout
+    message: |
+      PiSpec Flow started for change: {{change_id}}
+      Workspace: {{workspace}}
+      Viewer: {{viewer_base_url}}/{{change_id}}
+  on_complete:
+    channel: stdout
+    message: "PiSpec Flow completed for {{change_id}}."
+  on_failure:
+    channel: stdout
+    message: "PiSpec Flow FAILED for {{change_id}}. Check logs."
