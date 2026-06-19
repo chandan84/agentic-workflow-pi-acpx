@@ -16,12 +16,14 @@ import (
 	"github.com/chandan84/agentic-workflow-pi-acpx/pkg/events"
 	"github.com/chandan84/agentic-workflow-pi-acpx/pkg/health"
 	"github.com/chandan84/agentic-workflow-pi-acpx/pkg/obs"
+	"github.com/chandan84/agentic-workflow-pi-acpx/pkg/pgxconn"
 	flowsv1 "github.com/chandan84/agentic-workflow-pi-acpx/pkg/protogen/flows/v1"
 	"github.com/chandan84/agentic-workflow-pi-acpx/pkg/runtime"
 	"github.com/chandan84/agentic-workflow-pi-acpx/services/flow/internal/app"
 	"github.com/chandan84/agentic-workflow-pi-acpx/services/flow/internal/author"
 	"github.com/chandan84/agentic-workflow-pi-acpx/services/flow/internal/grpcsrv"
 	"github.com/chandan84/agentic-workflow-pi-acpx/services/flow/internal/ports"
+	"github.com/chandan84/agentic-workflow-pi-acpx/services/flow/internal/store"
 	"github.com/chandan84/agentic-workflow-pi-acpx/services/flow/internal/stub"
 
 	"google.golang.org/grpc"
@@ -83,7 +85,18 @@ func run() error {
 
 	// Store.
 	var st ports.Store = stub.New()
-	log.Info("store: stub (postgres adapter wires on driver registration)")
+	if cfg.Stubs["store"] != "stub" {
+		db, err := pgxconn.Open(ctx, pgxconn.Options{DSN: cfg.Postgres.DSN, Schema: cfg.Postgres.Schema})
+		if err != nil {
+			log.Warn("postgres unavailable; using stub store", "err", err)
+		} else {
+			st = store.New(db)
+			defer func() { _ = db.Close() }()
+			log.Info("store: postgres", "schema", cfg.Postgres.Schema)
+		}
+	} else {
+		log.Info("store: stub (configured)")
+	}
 
 	// App.
 	svc := app.New(st, bus, author.New(rt))

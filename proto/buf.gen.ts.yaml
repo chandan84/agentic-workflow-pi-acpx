@@ -1,0 +1,9 @@
+version: v2
+# TypeScript-only generation. Go bindings live under ../pkg/protogen and are
+# regenerated with buf.gen.yaml (requires protoc-gen-go on PATH).
+plugins:
+  - local: ["npx", "--prefix", "../apps/desktop/web", "protoc-gen-es"]
+    out: ../apps/desktop/web/src/gen
+    opt:
+      - target=ts
+      - import_extension=js

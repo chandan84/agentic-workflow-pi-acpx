@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { agentsClient } from "../client/clients";
 import { useAppStore, type Agent, type AgentGroup } from "../state/store";
 
 const MOCK_GROUPS: AgentGroup[] = [
@@ -51,11 +52,43 @@ export function Groups(): JSX.Element {
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO(generated): agentsClient.listGroups({ page: { pageSize: 50 } })
-    //   .then((res) => setGroups(res.groups.map(...)));
-    if (groups.length === 0) setGroups(MOCK_GROUPS);
-    // TODO(generated): agentsClient.listAgents({ groupId: selectedGroup, page })
-    if (agents.length === 0) setAgents(MOCK_AGENTS);
+    let cancelled = false;
+    // Call the real gateway first; fall back to mocks if the gateway is
+    // unreachable (e.g. demo mode, no backend running). The gateway must
+    // serve Connect protocol — see services/gateway/README.md.
+    Promise.all([
+      agentsClient.listGroups({ page: { limit: 50, cursor: "" } }),
+      agentsClient.listAgents({ groupId: "", page: { limit: 100, cursor: "" } }),
+    ])
+      .then(([gRes, aRes]) => {
+        if (cancelled) return;
+        setGroups(
+          gRes.groups.map((g) => ({
+            id: g.id,
+            name: g.name,
+            description: g.description,
+            createdAt: g.createdAt ? new Date(Number(g.createdAt.seconds) * 1000).toISOString() : "",
+          })),
+        );
+        setAgents(
+          aRes.agents.map((a) => ({
+            id: a.id,
+            groupId: a.groupId,
+            name: a.name,
+            role: a.role,
+            piWorkspace: a.piWorkspace,
+            env: a.env,
+          })),
+        );
+      })
+      .catch(() => {
+        if (cancelled) return;
+        if (groups.length === 0) setGroups(MOCK_GROUPS);
+        if (agents.length === 0) setAgents(MOCK_AGENTS);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [groups.length, agents.length, setGroups, setAgents]);
 
   const visibleAgents = selectedGroup
@@ -68,9 +101,26 @@ export function Groups(): JSX.Element {
         <div className="muted">{groups.length} groups</div>
         <button
           className="primary"
-          onClick={() => {
-            // TODO(generated): agentsClient.createGroup({ name, description })
-            window.alert("CreateGroup not yet wired up; awaiting generated client");
+          onClick={async () => {
+            const name = window.prompt("Group name?") ?? "";
+            if (!name) return;
+            const description = window.prompt("Description?") ?? "";
+            try {
+              const res = await agentsClient.createGroup({ name, description });
+              if (res.group) {
+                setGroups([
+                  ...groups,
+                  {
+                    id: res.group.id,
+                    name: res.group.name,
+                    description: res.group.description,
+                    createdAt: new Date().toISOString(),
+                  },
+                ]);
+              }
+            } catch (e) {
+              window.alert(`Gateway unreachable: ${String(e)}`);
+            }
           }}
         >
           New group

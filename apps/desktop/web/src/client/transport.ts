@@ -24,12 +24,10 @@ export const transport: Transport = createConnectTransport({
 });
 
 /**
- * Service clients will be created here once protogen exists. Until then,
- * pages import `transport` directly and document TODOs at call sites.
+ * The constructed Connect service clients live in ./clients.ts and import
+ * `transport` from this file. Pages should import from ./clients only.
  *
- * Example wiring once generated:
- *
- *   import { createClient } from "@connectrpc/connect";
- *   import { AgentsService } from "@/gen/agents/v1/agents_connect";
- *   export const agentsClient = createClient(AgentsService, transport);
+ * Runtime note: the gateway currently serves gRPC; for browser clients to
+ * actually reach it, see services/gateway/README.md for the two supported
+ * options (add Connect-Go handlers or run a gRPC-Web proxy).
  */

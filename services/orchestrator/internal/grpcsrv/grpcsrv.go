@@ -3,7 +3,9 @@ package grpcsrv
 
 import (
 	"context"
+	"encoding/json"
 
+	"github.com/chandan84/agentic-workflow-pi-acpx/pkg/events"
 	commonv1 "github.com/chandan84/agentic-workflow-pi-acpx/pkg/protogen/common/v1"
 	executionv1 "github.com/chandan84/agentic-workflow-pi-acpx/pkg/protogen/execution/v1"
 	"github.com/chandan84/agentic-workflow-pi-acpx/services/orchestrator/internal/app"
@@ -15,9 +17,13 @@ import (
 type Server struct {
 	executionv1.UnimplementedExecutionServiceServer
 	Svc *app.Service
+	Bus events.Bus
 }
 
-// New wires a Server.
+// NewServer wires a Server with a bus subscription for live run events.
+func NewServer(s *app.Service, b events.Bus) *Server { return &Server{Svc: s, Bus: b} }
+
+// New wires a Server without bus (compat shim for callers that don't stream).
 func New(s *app.Service) *Server { return &Server{Svc: s} }
 
 // StartRun starts a new run.
@@ -69,10 +75,66 @@ func (s *Server) RejectCheckpoint(ctx context.Context, in *executionv1.RejectChe
 	return &executionv1.RejectCheckpointResponse{Checkpoint: toProtoCheckpoint(c)}, nil
 }
 
-// StreamRunEvents is the live tail (skeleton: closes immediately; real wiring
-// subscribes to NATS `runs.*` subjects filtered to the requested run id).
-func (s *Server) StreamRunEvents(_ *executionv1.StreamRunEventsRequest, _ executionv1.ExecutionService_StreamRunEventsServer) error {
+// StreamRunEvents subscribes to the bus and forwards run-scoped events to the
+// caller. The subscription is cancelled when the client closes the stream.
+func (s *Server) StreamRunEvents(in *executionv1.StreamRunEventsRequest, stream executionv1.ExecutionService_StreamRunEventsServer) error {
+	if s.Bus == nil {
+		return nil
+	}
+	wanted := in.GetRunId()
+	subjects := []string{
+		events.SubjectRunStarted, events.SubjectRunUpdated, events.SubjectRunCompleted, events.SubjectRunFailed,
+		events.SubjectRunCheckpointWait, events.SubjectRunCheckpointDone,
+		events.SubjectRunSegmentStart, events.SubjectRunSegmentEnd, events.SubjectRunWorkItemEmitted,
+	}
+	cancels := make([]func() error, 0, len(subjects))
+	for _, subj := range subjects {
+		subject := subj
+		cancel, err := s.Bus.Subscribe(stream.Context(), subject, func(_ string, data []byte) {
+			if !runIDMatches(wanted, data) {
+				return
+			}
+			_ = stream.Send(&executionv1.RunEvent{
+				RunId: extractRunID(data), Kind: subject, PayloadJson: string(data),
+				At: timestamppb.Now(),
+			})
+		})
+		if err != nil {
+			continue
+		}
+		cancels = append(cancels, cancel)
+	}
+	defer func() {
+		for _, c := range cancels {
+			_ = c()
+		}
+	}()
+	<-stream.Context().Done()
 	return nil
+}
+
+func runIDMatches(wanted string, data []byte) bool {
+	if wanted == "" {
+		return true
+	}
+	return extractRunID(data) == wanted
+}
+
+func extractRunID(data []byte) string {
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		return ""
+	}
+	if v, ok := m["runId"].(string); ok && v != "" {
+		return v
+	}
+	if v, ok := m["RunID"].(string); ok && v != "" {
+		return v
+	}
+	if v, ok := m["id"].(string); ok && v != "" {
+		return v
+	}
+	return ""
 }
 
 func toProtoRun(r ports.Run) *executionv1.Run {

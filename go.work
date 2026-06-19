@@ -10,6 +10,7 @@ use (
   ./pkg/testutil
   ./pkg/runtime
   ./pkg/protogen
+  ./pkg/pgxconn
   ./services/agents
   ./services/flow
   ./services/orchestrator

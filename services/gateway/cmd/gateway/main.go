@@ -16,9 +16,13 @@ import (
 	"github.com/chandan84/agentic-workflow-pi-acpx/pkg/events"
 	"github.com/chandan84/agentic-workflow-pi-acpx/pkg/health"
 	"github.com/chandan84/agentic-workflow-pi-acpx/pkg/obs"
+	agentsv1 "github.com/chandan84/agentic-workflow-pi-acpx/pkg/protogen/agents/v1"
 	auditv1 "github.com/chandan84/agentic-workflow-pi-acpx/pkg/protogen/audit/v1"
+	executionv1 "github.com/chandan84/agentic-workflow-pi-acpx/pkg/protogen/execution/v1"
+	flowsv1 "github.com/chandan84/agentic-workflow-pi-acpx/pkg/protogen/flows/v1"
 	"github.com/chandan84/agentic-workflow-pi-acpx/services/gateway/internal/audit"
 	"github.com/chandan84/agentic-workflow-pi-acpx/services/gateway/internal/grpcsrv"
+	"github.com/chandan84/agentic-workflow-pi-acpx/services/gateway/internal/upstreams"
 
 	"google.golang.org/grpc"
 )
@@ -72,6 +76,36 @@ func run() error {
 
 	gs := grpc.NewServer()
 	auditv1.RegisterAuditServiceServer(gs, grpcsrv.NewAudit(src))
+
+	// Proxies to upstream services. Dials are non-blocking — failures appear
+	// at request time rather than at boot so the gateway is always live.
+	if addr := cfg.Upstreams.Agents; addr != "" {
+		if cc, err := upstreams.Dial(addr); err == nil {
+			agentsv1.RegisterAgentsServiceServer(gs, upstreams.NewAgentsProxy(cc))
+			defer func() { _ = cc.Close() }()
+			log.Info("proxy: agents", "addr", addr)
+		} else {
+			log.Warn("agents dial failed", "addr", addr, "err", err)
+		}
+	}
+	if addr := cfg.Upstreams.Flow; addr != "" {
+		if cc, err := upstreams.Dial(addr); err == nil {
+			flowsv1.RegisterFlowServiceServer(gs, upstreams.NewFlowsProxy(cc))
+			defer func() { _ = cc.Close() }()
+			log.Info("proxy: flow", "addr", addr)
+		} else {
+			log.Warn("flow dial failed", "addr", addr, "err", err)
+		}
+	}
+	if addr := cfg.Upstreams.Orchestrator; addr != "" {
+		if cc, err := upstreams.Dial(addr); err == nil {
+			executionv1.RegisterExecutionServiceServer(gs, upstreams.NewExecutionProxy(cc))
+			defer func() { _ = cc.Close() }()
+			log.Info("proxy: orchestrator", "addr", addr)
+		} else {
+			log.Warn("orchestrator dial failed", "addr", addr, "err", err)
+		}
+	}
 
 	lis, err := net.Listen("tcp", cfg.GRPCAddr)
 	if err != nil {

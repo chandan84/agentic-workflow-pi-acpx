@@ -8,9 +8,11 @@ require (
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/flowir v0.0.0
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/health v0.0.0
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/obs v0.0.0
+	github.com/chandan84/agentic-workflow-pi-acpx/pkg/pgxconn v0.0.0
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/protogen v0.0.0
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/runtime v0.0.0
 	github.com/google/uuid v1.6.0
+	github.com/stretchr/testify v1.9.0
 	go.temporal.io/sdk v1.28.1
 	google.golang.org/grpc v1.67.1
 	google.golang.org/protobuf v1.34.2
@@ -21,10 +23,10 @@ require (
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/mock v1.6.0 // indirect
-	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
 	github.com/klauspost/compress v1.17.2 // indirect
+	github.com/lib/pq v1.10.9 // indirect
 	github.com/nats-io/nats.go v1.37.0 // indirect
 	github.com/nats-io/nkeys v0.4.7 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
@@ -34,20 +36,23 @@ require (
 	github.com/robfig/cron v1.2.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
 	go.temporal.io/api v1.36.0 // indirect
 	golang.org/x/crypto v0.26.0 // indirect
 	golang.org/x/exp v0.0.0-20231127185646-65229373498e // indirect
 	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
-	golang.org/x/time v0.3.0 // indirect
+	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240814211410-ddb44dafa142 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-require google.golang.org/genproto v0.0.0-20240814211410-ddb44dafa142 // pin to split-modules-era version
+// Force genproto to a split-modules-era version so imports of
+// google.golang.org/genproto/googleapis/{api,rpc} are unambiguous.
+// (Older releases bundled those subpackages, conflicting with the split
+// modules pulled in by grpc-gateway/v2 and temporal/api.)
+replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20240814211410-ddb44dafa142
 
 replace (
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/config => ../../pkg/config
@@ -55,6 +60,7 @@ replace (
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/flowir => ../../pkg/flowir
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/health => ../../pkg/health
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/obs => ../../pkg/obs
+	github.com/chandan84/agentic-workflow-pi-acpx/pkg/pgxconn => ../../pkg/pgxconn
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/protogen => ../../pkg/protogen
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/runtime => ../../pkg/runtime
 )

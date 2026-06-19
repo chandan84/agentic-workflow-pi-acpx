@@ -17,10 +17,12 @@ import (
 	"github.com/chandan84/agentic-workflow-pi-acpx/pkg/events"
 	"github.com/chandan84/agentic-workflow-pi-acpx/pkg/health"
 	"github.com/chandan84/agentic-workflow-pi-acpx/pkg/obs"
+	"github.com/chandan84/agentic-workflow-pi-acpx/pkg/pgxconn"
 	agentsv1 "github.com/chandan84/agentic-workflow-pi-acpx/pkg/protogen/agents/v1"
 	"github.com/chandan84/agentic-workflow-pi-acpx/services/agents/internal/app"
 	"github.com/chandan84/agentic-workflow-pi-acpx/services/agents/internal/grpcsrv"
 	"github.com/chandan84/agentic-workflow-pi-acpx/services/agents/internal/ports"
+	"github.com/chandan84/agentic-workflow-pi-acpx/services/agents/internal/store"
 	"github.com/chandan84/agentic-workflow-pi-acpx/services/agents/internal/stub"
 
 	"google.golang.org/grpc"
@@ -79,7 +81,16 @@ func run() error {
 	// Store.
 	var st ports.Store = stub.New()
 	if cfg.Stubs["store"] != "stub" {
-		log.Info("store: stub (real Postgres adapter wires when driver is registered)")
+		db, err := pgxconn.Open(ctx, pgxconn.Options{DSN: cfg.Postgres.DSN, Schema: cfg.Postgres.Schema})
+		if err != nil {
+			log.Warn("postgres unavailable; using stub store", "err", err)
+		} else {
+			st = store.New(db)
+			defer func() { _ = db.Close() }()
+			log.Info("store: postgres", "schema", cfg.Postgres.Schema)
+		}
+	} else {
+		log.Info("store: stub (configured)")
 	}
 
 	// AuthN (interface in scope; gRPC interceptor below applies it).

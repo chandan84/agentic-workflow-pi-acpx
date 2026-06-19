@@ -8,6 +8,7 @@ require (
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/flowir v0.0.0
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/health v0.0.0
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/obs v0.0.0
+	github.com/chandan84/agentic-workflow-pi-acpx/pkg/pgxconn v0.0.0
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/protogen v0.0.0
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/runtime v0.0.0
 	github.com/google/uuid v1.6.0
@@ -17,6 +18,7 @@ require (
 
 require (
 	github.com/klauspost/compress v1.17.2 // indirect
+	github.com/lib/pq v1.10.9 // indirect
 	github.com/nats-io/nats.go v1.37.0 // indirect
 	github.com/nats-io/nkeys v0.4.7 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
@@ -36,6 +38,7 @@ replace (
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/flowir => ../../pkg/flowir
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/health => ../../pkg/health
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/obs => ../../pkg/obs
+	github.com/chandan84/agentic-workflow-pi-acpx/pkg/pgxconn => ../../pkg/pgxconn
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/protogen => ../../pkg/protogen
 	github.com/chandan84/agentic-workflow-pi-acpx/pkg/runtime => ../../pkg/runtime
 )

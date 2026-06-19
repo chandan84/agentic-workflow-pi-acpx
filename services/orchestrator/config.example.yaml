@@ -16,8 +16,11 @@ temporal:
   task_queue: awpa-orchestrator
 auth:
   mode: none
+upstreams:
+  flow: localhost:7002
 stubs:
   store:    real
   bus:      real
   runtime:  stub
   temporal: stub
+  flowsrc:  real
